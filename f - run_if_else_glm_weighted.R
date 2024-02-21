@@ -106,7 +106,7 @@ run_if_else_glm_weighted <- function(chemical_immune_chunk,
                                         , SDDSRVYR %in% c(3:10) ~ (1/cycle_length)*(unadj_weight)
                                         ))
   # print(str(chunk_and_ad_weight$RIDRETH1))
-  # View(chunk_and_ad_weight)
+  View(chunk_and_ad_weight)
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ACCOUNT FOR NHANES SAMPLING DESIGN  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#

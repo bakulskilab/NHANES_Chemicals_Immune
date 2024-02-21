@@ -208,14 +208,14 @@ correlation_plot_unweight_weight <- function(model_stats_wt_adj,
 
   # Save the plot as a pdf for viewing at a high resolution
   print("weighted cotinine vs no cotinine estimates.pdf")
-  ggsave(filename = "new weighted cotinine vs no cotinine estimates.pdf"
+  ggsave(filename = "new weighted cotinine vs no cotinine estimates1.pdf"
          , plot = wt_unadj_adj_plot
          , width = 14
          , height = 9)
 
   # Save the plot as a png for presentation
   print("weighted cotinine vs no cotinine estimates.png")
-  ggsave(filename = "new weighted cotinine vs no cotinine estimates.png"
+  ggsave(filename = "new weighted cotinine vs no cotinine estimates1.png"
          , plot = wt_unadj_adj_plot
          , units = "in"
          , width = 14

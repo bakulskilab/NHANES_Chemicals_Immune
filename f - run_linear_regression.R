@@ -33,7 +33,7 @@ run_linear_regression <- function(long_nhanes_subset,
   #run linear regressions
   # print("run reg")
   df_regressions_i <- long_nhanes_subset %>%
-    # filter(chemical_codename %in% c("URXPAR")) %>%
+    # filter(chemical_codename %in% c("LBXBPB")) %>%
     # filter(celltype_codename %in% c("LBXLYPCT")) %>%
     group_by(celltype_codename, chemical_codename) %>%
     do(run_if_else_glm_weighted(.,

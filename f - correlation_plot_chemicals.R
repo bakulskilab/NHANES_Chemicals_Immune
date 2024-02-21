@@ -213,49 +213,65 @@ correlation_plot_chemicals <- function(subset_chemicals,
 
 
   pdf("chemical_heatmap_correlation_smk.pdf", width = 14, height = 9)
-  pheatmap(mat = chem_correlations,
+  # pheatmap(mat = chem_correlations,
+  #          cluster_rows = FALSE, cluster_cols = FALSE,
+  #          annotation_col = chem_fam_names,
+  #          annotation_row = chem_fam_names,
+  #          labels_row = chem_fam_reorder$chemical_name, #chemical names
+  #          labels_col = chem_fam_reorder$chemical_name,
+  #          annotation_names_row = FALSE, #x label
+  #          annotation_names_col = FALSE, #y label
+  #          # angle_col = 45,
+  #          fontsize_row = 2,
+  #          fontsize_col = 2,
+  #          gaps_col = num_chem_fam$breaks,
+  #          gaps_row = num_chem_fam$breaks,
+  #          annotation_colors = chem_family_colors,
+  #          color=myColor,
+  #          breaks=myBreaks,
+  #          # cellheight=5,cellwidth=4,
+  #          legend = TRUE)
+  pheatmap(chem_correlations,
            cluster_rows = FALSE, cluster_cols = FALSE,
-           annotation_col = chem_fam_names,
            annotation_row = chem_fam_names,
-           labels_row = chem_fam_reorder$chemical_name,
+           annotation_col = chem_fam_names,
+           labels_row = chem_fam_reorder$chemical_name, #chemical names
            labels_col = chem_fam_reorder$chemical_name,
-           annotation_names_row = FALSE,
-           annotation_names_col = FALSE,
-           # angle_col = 45,
-           fontsize_row = 2,
-           fontsize_col = 2,
            gaps_col = num_chem_fam$breaks,
            gaps_row = num_chem_fam$breaks,
+           color=myColor, breaks=myBreaks,
            annotation_colors = chem_family_colors,
-           color=myColor,
-           breaks=myBreaks,
+           annotation_names_row = FALSE, #x label
+           annotation_names_col = FALSE, #y label
+           fontsize_row = 2,
+           fontsize_col = 2,
            legend = TRUE)
   dev.off()
+  
 
   svg(file = "chemical_heatmap_correlation_smk.svg", width = 14, height = 9)
-  pheatmap(mat = chem_correlations,
+  pheatmap(chem_correlations,
            cluster_rows = FALSE, cluster_cols = FALSE,
-           annotation_col = chem_fam_names,
            annotation_row = chem_fam_names,
-           labels_row = chem_fam_reorder$chemical_name,
+           annotation_col = chem_fam_names,
+           labels_row = chem_fam_reorder$chemical_name, #chemical names
            labels_col = chem_fam_reorder$chemical_name,
-           annotation_names_row = FALSE,
-           annotation_names_col = FALSE,
-           # angle_col = 45,
-           fontsize_row = 2,
-           fontsize_col = 2,
            gaps_col = num_chem_fam$breaks,
            gaps_row = num_chem_fam$breaks,
+           color=myColor, breaks=myBreaks,
            annotation_colors = chem_family_colors,
-           color=myColor,
-           breaks=myBreaks,
+           annotation_names_row = FALSE, #x label
+           annotation_names_col = FALSE, #y label
+           fontsize_row = 2,
+           fontsize_col = 2,
            legend = TRUE)
   dev.off()
 
   #############################################################################################################
   #############################################################################################################
   #############################################################################################################
-
+  library(beepr)
+  beep()
   setwd(current_directory)
 }
 

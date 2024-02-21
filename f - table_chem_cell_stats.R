@@ -54,8 +54,8 @@ table_chem_cell_stats <- function(nhanes_subset,
             summarise(
               n = n(), #total number of measurements
               min = round(min(measurement), digits = 2),
-              quantile_01 = round(quantile(measurement, probs = 0.01), digits = 2),
-              quantile_99 = round(quantile(measurement, probs = 0.99), digits = 2),
+              quantile_25 = round(quantile(measurement, probs = 0.25), digits = 2),
+              quantile_75 = round(quantile(measurement, probs = 0.75), digits = 2),
               max = round(max(measurement), digits = 2),
               mean = round(mean(measurement), digits = 2),
               stdev = round(sd(measurement), digits = 2),
@@ -73,12 +73,12 @@ table_chem_cell_stats <- function(nhanes_subset,
                   chemical_codename_use,
                   n,
                   min,
-                  quantile_01,
-                  quantile_99,
+                  quantile_25,
+                  median,
+                  quantile_75,
                   max,
                   mean,
                   stdev,
-                  median,
                   percent_above_LOD) %>%
     mutate(percent_above_LOD = round(percent_above_LOD, digits = 3))
   print("stats_chems shortened")

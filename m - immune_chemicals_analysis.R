@@ -77,7 +77,7 @@ long_nhanes_subset_scale_dataset <- long_nhanes_subset_scale_function(nhanes_sub
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Create Barplot and Scatterplot of LOD data ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#supplemental figures 1 and 2
+#supplemental figures 1 and 2 - rerun 8/8/23
 source("f - limit_of_detection_bar_plots.R", local=T)
 limit_of_detection_bar_plots(subset_chemicals = use_these_chems)
 
@@ -103,7 +103,7 @@ table_2_weighted(nhanes_subset = nhanes_subset_dataset,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~  Put Together Chemicals File For Supplemental Table ~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#supplemental table 1
+#supplemental table 1 - reran 8/8/23
 source("f - supplemental_table_chemicals.R", local = TRUE)
 supplemental_table_chemicals(chem_master = list_master_files$Chemicals,
                              conversion = use_these_chems)
@@ -122,7 +122,7 @@ table_inclusion_exclusion(nhanes_subset = nhanes_subset_dataset,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  Make Supplemental Table Chemicals ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#supplemental table 3
+#supplemental table 3 - updated 8/8/23
 source("f - table_chem_cell_stats.R", local=T)
 table_chem_cell_stats(nhanes_subset = nhanes_subset_dataset,
                       subset_chemicals = use_these_chems)
@@ -139,7 +139,7 @@ table_immune_category_stats(nhanes_subset = nhanes_subset_dataset)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Make Correlation Plots ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#figure 2 and supplemental table 4
+#figure 2 and supplemental table 4 - updated 8/8/23
 source("f - correlation_plot_chemicals.R", local = TRUE)
 correlation_plot_chemicals(subset_chemicals = use_these_chems,
                            nhanes_subset = nhanes_subset_dataset,
@@ -171,7 +171,7 @@ model_stats_smk <- run_linear_regression(long_nhanes_subset = long_nhanes_subset
                                          nhanes_subset = nhanes_subset_dataset)
 
 setwd(paste0(current_directory, "/Regression Results"))
-write.csv(model_stats_smk, "model_stats_smk.csv", row.names = FALSE)
+write.csv(model_stats_smk_clean, "model_stats_smk.csv", row.names = FALSE)
 setwd(current_directory)
 
 #scaled for figures
@@ -185,6 +185,13 @@ model_stats_smk_scaled <- run_linear_regression(long_nhanes_subset = long_nhanes
 setwd(paste0(current_directory, "/Regression Results"))
 write.csv(model_stats_smk_scaled, "model_stats_smk_scaled.csv", row.names = FALSE)
 setwd(current_directory)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Interpret Beta Coefficients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+source("f - interpret_beta.R", local=T)
+interpret_beta(model_stats = model_stats_smk)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~  Weighted Linear Regression, Unadjusted for Cotinine ~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -219,7 +226,7 @@ significant_linear_chemical_plot(model_stats = model_stats_smk_scaled,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Forest Plots ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#figure 4
+#figure 4 - reran 8/8/23
 source("f - forest_plot_lin_reg.R", local = TRUE)
 forest_plot_lin_reg(model_stats = model_stats_smk_scaled,
                     conversion = use_these_chems)
@@ -228,7 +235,7 @@ forest_plot_lin_reg(model_stats = model_stats_smk_scaled,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Make Correlation Plots ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#supplemental figure 5
+#supplemental figure 5 - rerun 8/8/23
 source("f - correlation_plot_unweight_weight.R", local = TRUE)
 correlation_plot_unweight_weight(model_stats_wt_adj = model_stats_smk_scaled,
                                  model_stats_wt_unadj = model_stats_scale_no_smk)
@@ -253,12 +260,5 @@ source("f - run_logit_regression.R", local=T)
 run_logit_regression(long_nhanes_subset = long_nhanes_subset_dataset,
                      conversion = use_these_chems,
                      weights_dataset = survey_weights)
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Interpret Beta Coefficients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-source("f - interpret_beta.R", local=T)
-interpret_beta(model_stats = model_stats_smk)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#

@@ -32,7 +32,7 @@ interpret_beta <- function(model_stats)
   
   # Keep only the chemical betas
   model_stats_chems <- model_stats %>%
-    # filter(term == "chem_log_measurement") %>%
+    filter(term == "chem_log_measurement") %>%
     mutate(interpret = case_when(celltype_codename %in% chem_pct ~ estimate,
                                  celltype_codename == "LBXWBCSI" ~ estimate * 1000,
                                  celltype_codename == "LBXRBCSI" ~ estimate * 1000000,
@@ -49,36 +49,42 @@ interpret_beta <- function(model_stats)
                              celltype_codename == "LBXWBCSI" ~ "cells per uL",
                              celltype_codename == "LBXRBCSI" ~ "cells per uL",
                              celltype_codename == "LBXMCVSI" ~ "fL")) %>%
-    mutate(covariate = case_when(term == "RIDRETH11" ~ "race_mexican_american",
-                                 term == "RIDRETH12" ~ "race_other_hispanic",
-                                 term == "RIDRETH14" ~ "race_non_hispanic_black",
-                                 term == "RIDRETH15" ~ "race_other",
-                                 term == "RIDAGEYR"  ~ "age",
-                                 term == "RIAGENDR2" ~ "sex_female",
-                                 term == "INDFMPIR"  ~ "poverty_income_ratio",
-                                 term == "BMXWAIST"  ~ "waist_circumference",
-                                 term == "BMXWAIST"  ~ "waist_circumference",
-                                 term == "SDDSRVYR2" ~ "cycle_2",
-                                 term == "SDDSRVYR3" ~ "cycle_3",
-                                 term == "SDDSRVYR4" ~ "cycle_4",
-                                 term == "SDDSRVYR5" ~ "cycle_5",
-                                 term == "SDDSRVYR6" ~ "cycle_6",
-                                 term == "SDDSRVYR7" ~ "cycle_7",
-                                 term == "SDDSRVYR8" ~ "cycle_8",
-                                 term == "SDDSRVYR9" ~ "cycle_9",
-                                 term == "SDDSRVYR10" ~ "cycle_10",
-                                 term == "URXUCR"    ~ "creatinine",
-                                 term == "(Intercept)" ~ "intercept",
-                                 term == "SMOKING" ~ "cotinine",
-                                 term == "chem_log_measurement" ~ "chemical")) %>%
+    # mutate(covariate = case_when(term == "RIDRETH11" ~ "race_mexican_american",
+    #                              term == "RIDRETH12" ~ "race_other_hispanic",
+    #                              term == "RIDRETH14" ~ "race_non_hispanic_black",
+    #                              term == "RIDRETH15" ~ "race_other",
+    #                              term == "RIDAGEYR"  ~ "age",
+    #                              term == "RIAGENDR2" ~ "sex_female",
+    #                              term == "INDFMPIR"  ~ "poverty_income_ratio",
+    #                              term == "BMXWAIST"  ~ "waist_circumference",
+    #                              term == "BMXWAIST"  ~ "waist_circumference",
+    #                              term == "SDDSRVYR2" ~ "cycle_2",
+    #                              term == "SDDSRVYR3" ~ "cycle_3",
+    #                              term == "SDDSRVYR4" ~ "cycle_4",
+    #                              term == "SDDSRVYR5" ~ "cycle_5",
+    #                              term == "SDDSRVYR6" ~ "cycle_6",
+    #                              term == "SDDSRVYR7" ~ "cycle_7",
+    #                              term == "SDDSRVYR8" ~ "cycle_8",
+    #                              term == "SDDSRVYR9" ~ "cycle_9",
+    #                              term == "SDDSRVYR10" ~ "cycle_10",
+    #                              term == "URXUCR"    ~ "creatinine",
+    #                              term == "(Intercept)" ~ "intercept",
+    #                              term == "SMOKING" ~ "cotinine",
+    #                              term == "chem_log_measurement" ~ "chemical")) %>%
     dplyr::select(-estimate,
-                  -lower.CI,
-                  -upper.CI,
                   -term) %>%
-    relocate(interpret, .after = celltype_codename) %>%
-    relocate(covariate, .before = interpret) %>%
-    relocate(lower_ci, .after = interpret) %>%
-    relocate(upper_ci, .after = lower_ci)
+    dplyr::select(immune_measure,
+                  chemical_name,
+                  interpret,
+                  std.error,
+                  lower_ci,
+                  upper_ci,
+                  statistic,
+                  p.value,
+                  FDR,
+                  units,
+                  chem_family,
+                  chemical_codename)
   
   #############################################################################################################
   ######################################### Save Interpretted Dataset #########################################
@@ -89,6 +95,8 @@ interpret_beta <- function(model_stats)
   write.csv(model_stats_chems,
             file = "model_stats_chems_interpretted.csv",
             row.names = F)
+  
+  print("Results saved in Regression Results folder")
   
   #############################################################################################################
   ###################################### Significant Immune per Chemical ######################################

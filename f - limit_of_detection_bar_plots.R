@@ -112,7 +112,7 @@ limit_of_detection_bar_plots <- function(subset_chemicals)
          , units = "in"
          , width = 9
          , height = 9
-         , dpi = 300)
+         , dpi = 500)
   
   setwd(current_directory)
   

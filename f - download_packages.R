@@ -27,7 +27,8 @@ download_packages <- function()
                            "survey",
                            "ggrepel",
                            "rstatix",
-                           "gt")
+                           "gt",
+                           "cowplot")
   
   # Install the packages
   install.packages(packages_to_install)

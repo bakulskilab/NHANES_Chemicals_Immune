@@ -19,6 +19,7 @@ supplemental_table_chemicals <- function(chem_master,
   
   #TEMPORARY
   # chem_master <- list_master_files$Chemicals
+  # conversion <- use_these_chems
 
   #############################################################################################################
   ########################################## Drop Unnecessary Columns #########################################
