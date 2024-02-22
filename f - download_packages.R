@@ -28,7 +28,8 @@ download_packages <- function()
                            "ggrepel",
                            "rstatix",
                            "gt",
-                           "cowplot")
+                           "colorspace",
+                           "ggpubr")
   
   # Install the packages
   install.packages(packages_to_install)

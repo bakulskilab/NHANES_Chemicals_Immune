@@ -77,7 +77,7 @@ long_nhanes_subset_scale_dataset <- long_nhanes_subset_scale_function(nhanes_sub
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Create Barplot and Scatterplot of LOD data ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#supplemental figures 1 and 2 - rerun 8/8/23
+#supplemental figures 1 and 2 - rerun 8/8/23, 2/21/24
 source("f - limit_of_detection_bar_plots.R", local=T)
 limit_of_detection_bar_plots(subset_chemicals = use_these_chems)
 

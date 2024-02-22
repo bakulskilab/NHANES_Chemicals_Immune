@@ -16,6 +16,9 @@ limit_of_detection_bar_plots <- function(subset_chemicals)
   library(ggplot2)
   library(dplyr)
   library(ggrepel)
+  library(colorspace)
+  library(ggpubr)
+  
   
   setwd(current_directory)
   
@@ -52,22 +55,78 @@ limit_of_detection_bar_plots <- function(subset_chemicals)
                                   key = over_under, #this is the new column to describe the number
                                   value = count, #these are the counts per chemical
                                   above:below #these are the columns to adjust
-                                 )
-  # long_subset_chemicals$chemical_name <- str_wrap(long_subset_chemicals$chemical_name, width = 75)
+  )
   
-  #define colors
-  mycolors <- c("darkmagenta", "grey50")
+  # Define a vector of chemical family names in a particular order
+  chem_family_levels <- c("Acrylamide"
+                          # , "Melamine"
+                          , "Brominated Flame Retardants (BFR)"
+                          , "Phosphate Flame Retardants (PFR)"
+                          , "Polychlorinated Biphenyls (PCB)"
+                          , "Dioxins"
+                          , "Furans"
+                          , "Metals"
+                          , "Phthalates & Plasticizers"
+                          , "Personal Care & Consumer Product Compounds"
+                          , "Pesticides"
+                          , "Aromatic Amines"
+                          # , "Phytoestrogens"
+                          , "Polyaromatic Hydrocarbons (PAH)"
+                          , "Volatile Organic Compounds (VOC)"
+                          , "Smoking Related Compounds"
+                          , "Per- and Polyfluoroalkyl Substances (PFAS)"
+                          , "Aldehydes"
+                          # , "Dietary Components"
+                          , "Other")
   
-  #this drops the units from the chemical names
+  # Ensure that the levels of the chemical family are in a defined order to ensure proper color scheme
+  long_subset_chemicals$chem_family <- factor(long_subset_chemicals$chem_family
+                                              , levels = chem_family_levels)
+  
+  #############################################################################################################
+  ##################################### Define Colors for Each Chemical Class #################################
+  #############################################################################################################
+  
+  # Define a string vector of color hexcodes for the chemical family in corresponding order
+  light_colors <- c()
+  
+  dark_colors <- c("#8B0000"      # Acrylamide
+                   # , "#9b870c"    # Melamine
+                   , "#EE0000"    # BFRs
+                   , "#FF6B00"    # PFRs
+                   , "#FF69B4"    # PCBs
+                   , "#FFA500"    # Dioxins
+                   , "#EEEE00"    # Furans
+                   , "#228B22"    # Metals
+                   , "#A4D3EE"    # Phthalates & Plasticizers
+                   , "#A2CD5A"    # Personal Care
+                   , "#1E90FF"    # Pesticides
+                   , "#be67c9"    # Aromatic Amines
+                   # , "#7D26CD"    # Phytoestrogens
+                   , "#cf9b76"    # PAHs
+                   , "#828282"    # VOCs
+                   , "#8B4513"    # Smoking
+                   , "#FFB6C1"    # PFCs
+                   , "#0E1171"    # Aldehydes
+                   , "#BABABA" )  # Other
+  
+  light_colors <- lighten(dark_colors, amount = 0.6)
+  
+  
+  # Concatenate light and dark colors together
+  mycolors <- c(dark_colors, light_colors)
+  
+  # This drops the units from the chemical names
   long_subset_chemicals$chemical_name <- gsub("\\s\\(([^()]+)\\)$"
                                               , ""
                                               , long_subset_chemicals$chemical_name)
   
-  #shorten this terrible name, fixed=T is the "did I stutter mode"
+  # Shorten this terrible name
   long_subset_chemicals$chemical_name <- gsub("N-Acetyl-S-(2-hydroxy-3-methyl-3-butenyl)-L-cysteine + N-Acetyl-S-(2-hydroxy-2-methyl-3-butenyl)-L-cysteine",
                                               "N-Acetyl-S-(2-hydroxy-2/3-methyl-3-butenyl)-L-cysteine",
                                               long_subset_chemicals$chemical_name,
                                               fixed = TRUE)
+  
   
   #############################################################################################################
   ######################################### Make The Barplot By Chemical ######################################
@@ -77,12 +136,12 @@ limit_of_detection_bar_plots <- function(subset_chemicals)
     ggplot(data = long_subset_chemicals,
            aes(x = count,
                y = reorder(chemical_name, count)))+
-    geom_col(aes(fill = over_under), width = 0.6,
+    geom_col(aes(fill = interaction(chem_family, over_under)), width = 0.6,
              position = position_stack(reverse = TRUE))+
     labs(x = "Participants", y = "")+
-    scale_fill_manual(values=mycolors,
-                      name = "Limit of Detection")+
     scale_x_continuous(expand = c(0,0))+
+    scale_fill_manual(values = mycolors,
+                      name = "Limit of Detection")+
     theme(axis.text.y = element_text(colour = "black",
                                      # angle = 90,
                                      vjust = 0.5, hjust=1,
@@ -91,27 +150,59 @@ limit_of_detection_bar_plots <- function(subset_chemicals)
           axis.title = element_text(size = 10)) +
     theme(panel.background = element_rect(fill = "white", #this is the background
                                           colour = "black", #this is the border
-                                          size = 0.1, linetype = "solid"))+
+                                          linewidth = 0.1, linetype = "solid"))+
     theme(panel.grid.major.x = element_line(color = "grey"),
           panel.grid.minor.x = element_line(color = "grey",
-                                            linetype = "dashed"))
+                                            linetype = "dashed"))+
+    theme(legend.position = "none")+
+    theme(plot.margin = margin(0.2, #top
+                               6,   #right
+                               0.2, #bottom
+                               0.1, #left
+                               "cm"))
   
+  
+  
+  ################################################ Make a Legend ##############################################
+  
+  subset_chemicals_above_below$chem_family <- factor(subset_chemicals_above_below$chem_family
+                                                     , levels = chem_family_levels)
+  
+  legend_plot <-
+    ggplot(data=subset_chemicals_above_below,
+           aes(x=chemical_name, 
+               y=total, 
+               fill = chem_family)) + 
+    geom_bar(stat="identity") +
+    scale_fill_manual("Chemical Family", 
+                      values=dark_colors)
+  
+  legend <- as_ggplot(get_legend(legend_plot))
+  
+  
+  ################################################## Save Plot ################################################
   
   setwd(paste0(current_directory, "/Bar Plots - Sample Size by Toxicant"))
-  # Save the plot as a pdf for viewing at a high resolution
-  print("chemicals by LOD numbers_weighted.pdf")
-  ggsave(filename = "chemicals by LOD numbers_weighted.pdf"
+  # Save the plot and legend as a pdf for viewing at a high resolution
+  print("chemicals by LOD numbers_weighted_color.pdf")
+  ggsave(filename = "chemicals by LOD numbers_weighted_color.pdf"
          , plot = chem_by_partic_by_LOD
          , width = 9
          , height = 9)
   
-  # Save the plot as a png for presentation
-  print("chemicals by LOD numbers_weighted.png")
-  ggsave(filename = "chemicals by LOD numbers_weighted.png"
+  # Save the plot and legend as a png for presentation
+  print("chemicals by LOD numbers_weighted_color.png")
+  ggsave(filename = "chemicals by LOD numbers_weighted_color.png"
          , plot = chem_by_partic_by_LOD
          , units = "in"
          , width = 9
          , height = 9
+         , dpi = 500)
+  ggsave(filename = "chemicals by LOD numbers_weighted_color_legend.png"
+         , plot = legend
+         , units = "in"
+         , width = 3
+         , height = 5
          , dpi = 500)
   
   setwd(current_directory)
