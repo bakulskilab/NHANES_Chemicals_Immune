@@ -31,15 +31,15 @@ limit_of_detection_bar_plots <- function(subset_chemicals)
   
   #make below column and move it after above column - relocate() doesn't work
   subset_chemicals_above_below <- subset_chemicals %>%
-    mutate(below = total - above)
+    mutate(below = total_number_people_unweighted - above_num_people_unweighted)
   subset_chemicals_above_below <- subset_chemicals_above_below %>%
     dplyr::select(chemical_codename_use,
                   chemical_name,
                   chem_family,
-                  above,
+                  above_num_people_unweighted,
                   below,
-                  total,
-                  percent_above_LOD)
+                  total_number_people_unweighted,
+                  above_percentage_unweighted)
   
   #remove the units from subset_chemicals for scatterplot later
   #this drops the units from the chemical names
@@ -54,7 +54,7 @@ limit_of_detection_bar_plots <- function(subset_chemicals)
   long_subset_chemicals <- gather(data = subset_chemicals_above_below, #this is the wide dataset
                                   key = over_under, #this is the new column to describe the number
                                   value = count, #these are the counts per chemical
-                                  above:below #these are the columns to adjust
+                                  above_num_people_unweighted:below #these are the columns to adjust
   )
   
   # Define a vector of chemical family names in a particular order
@@ -171,7 +171,7 @@ limit_of_detection_bar_plots <- function(subset_chemicals)
   legend_plot <-
     ggplot(data=subset_chemicals_above_below,
            aes(x=chemical_name, 
-               y=total, 
+               y=total_number_people_unweighted, 
                fill = chem_family)) + 
     geom_bar(stat="identity") +
     scale_fill_manual("Chemical Family", 
@@ -282,8 +282,8 @@ limit_of_detection_bar_plots <- function(subset_chemicals)
   #Scatterplot of # participants vs. % over LOD
   scatter_partic_by_chem_LOD <-
     ggplot(subset_chemicals,
-           aes(x = total,
-               y = percent_above_LOD,
+           aes(x = total_number_people_unweighted,
+               y = above_percentage_unweighted,
                color = chem_family,
                shape = chem_family))+
     geom_point(size = 2)+
@@ -291,11 +291,11 @@ limit_of_detection_bar_plots <- function(subset_chemicals)
                        values = chem_family_colors) +
     scale_shape_manual(name = "Chemical Family",
                        values = chem_family_shapes)+
-    geom_text(aes(label=ifelse(total > 30000, as.character(chemical_name),'')),
+    geom_text(aes(label=ifelse(total_number_people_unweighted > 30000, as.character(chemical_name),'')),
               vjust = -1,
               size = 4,
               show.legend = FALSE)+
-    geom_text_repel(aes(label=ifelse(percent_above_LOD < 55 & total < 20000,
+    geom_text_repel(aes(label=ifelse(above_percentage_unweighted < 55 & total_number_people_unweighted < 20000,
                                as.character(chemical_name),'')),
               hjust = -0.1,
               size = 4,
@@ -309,6 +309,8 @@ limit_of_detection_bar_plots <- function(subset_chemicals)
     theme(axis.title = element_text(size = 20))+
     theme(legend.text = element_text(size = 15),
           legend.title = element_text(size = 20))+
+    guides(colour = guide_legend(override.aes = list(size=5)))+
+    theme(legend.key = element_rect(fill = NA, color = NA))+
     theme(panel.background = element_rect(fill = "white",
                                           colour = "black", #this is the border
                                           size = 0.1, linetype = "solid"))

@@ -49,14 +49,14 @@ table_inclusion_exclusion <- function(nhanes_subset,
                   SDDSRVYR,
                   SMOKING,
                   URXUCR,
-                  "LBXLYPCT",
-                  "LBXMOPCT",
-                  "LBXNEPCT",
-                  "LBXEOPCT",
-                  "LBXBAPCT",
-                  "LBXWBCSI",
-                  "LBXRBCSI",
-                  "LBXMCVSI",
+                  LBDLYMNO,
+                  LBDNENO,
+                  LBDMONO,
+                  LBDBANO,
+                  LBDEONO,
+                  LBXWBCSI,
+                  LBXRBCSI,
+                  LBXMCVSI,
                   SDMVPSU,
                   SDMVSTRA)
   demog_vars <- demog_dataset %>%
@@ -84,11 +84,11 @@ table_inclusion_exclusion <- function(nhanes_subset,
             )
   
   #cells
-  cells <- c("LBXLYPCT", #lymphocytes percent
-             "LBXMOPCT", #monocytes
-             "LBXNEPCT", #neutrophils percent
-             "LBXEOPCT", #eosinophils
-             "LBXBAPCT", #basophils
+  cells <- c("LBDLYMNO", #lymphocytes
+             "LBDNENO",  #neutrophils
+             "LBDMONO",  #monocytes
+             "LBDBANO",  #basophils
+             "LBDEONO",  #eosinophils
              "LBXWBCSI", #WBC count
              "LBXRBCSI", #RBC count
              "LBXMCVSI"  #MCV
@@ -234,11 +234,11 @@ table_inclusion_exclusion <- function(nhanes_subset,
   vars_weights_clean$LBXWBCSI <- set_label(vars_weights_clean$LBXWBCSI, "WBC count (1000 cells/uL)")
   vars_weights_clean$LBXRBCSI <- set_label(vars_weights_clean$LBXRBCSI, "RBC count (million cells/uL)")
   vars_weights_clean$LBXMCVSI <- set_label(vars_weights_clean$LBXMCVSI, "Mean corpuscular volume (fL)")
-  vars_weights_clean$LBXLYPCT <- set_label(vars_weights_clean$LBXLYPCT, "Lymphocyte (%)")
-  vars_weights_clean$LBXMOPCT <- set_label(vars_weights_clean$LBXMOPCT, "Monocyte (%)") 
-  vars_weights_clean$LBXNEPCT <- set_label(vars_weights_clean$LBXNEPCT, "Segmented neutrophil (%)")
-  vars_weights_clean$LBXEOPCT <- set_label(vars_weights_clean$LBXEOPCT, "Eosinophil (%)")
-  vars_weights_clean$LBXBAPCT <- set_label(vars_weights_clean$LBXBAPCT, "Basophil (%)")
+  vars_weights_clean$LBDLYMNO <- set_label(vars_weights_clean$LBDLYMNO, "Lymphocyte (1000 cell/uL)")
+  vars_weights_clean$LBDMONO <- set_label(vars_weights_clean$LBDMONO, "Monocyte (1000 cell/uL)") 
+  vars_weights_clean$LBDNENO <- set_label(vars_weights_clean$LBDNENO, "Segmented neutrophil (1000 cell/uL)")
+  vars_weights_clean$LBDEONO <- set_label(vars_weights_clean$LBDEONO, "Eosinophil (1000 cell/uL)")
+  vars_weights_clean$LBDBANO <- set_label(vars_weights_clean$LBDBANO, "Basophil (1000 cell/uL)")
   vars_weights_clean$SDDSRVYR <- set_label(vars_weights_clean$SDDSRVYR, "Survey Cycle")
   
   str(vars_weights_clean)
@@ -282,7 +282,7 @@ table_inclusion_exclusion <- function(nhanes_subset,
     modify_header(label ~ "**Variable**") %>%
     bold_labels() %>%
     as_flex_table() %>%
-    save_as_docx(path = "included-excluded_demog_stats.docx") #Export the table to Word using flextable package
+    save_as_docx(path = "included-excluded_demog_stats_new.docx") #Export the table to Word using flextable package
 
   #############################################################################################################
   

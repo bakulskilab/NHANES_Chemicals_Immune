@@ -79,14 +79,16 @@ table_chem_cell_stats <- function(nhanes_subset,
                   max,
                   mean,
                   stdev,
-                  percent_above_LOD) %>%
-    mutate(percent_above_LOD = round(percent_above_LOD, digits = 3))
+                  above_percentage_unweighted,
+                  above_percentage_weighted) %>%
+    mutate(above_percentage_unweighted = round(above_percentage_unweighted, digits = 3),
+           above_percentage_weighted = round(above_percentage_weighted, digits = 3))
   print("stats_chems shortened")
   print(dim(stats_chems))
   
   #save the table as a csv
   setwd(paste0(current_directory, "/Tables - Table 1"))
-  write.csv(stats_chems, file = "subset_chemical_basic_statistics.csv", row.names = FALSE)
+  write.csv(stats_chems, file = "subset_chemical_basic_statistics_new.csv", row.names = FALSE)
   setwd(current_directory)
   print("stats on chemicals saved as csv")
 

@@ -31,11 +31,11 @@ table_2_weighted <- function(nhanes_subset,
   # Select the variables to use from nhanes subset and demographics dataset
   nhanes_vars <- nhanes_subset %>%
     dplyr::select(SEQN,
-                  "LBXLYPCT", #lymphocytes
-                  "LBXNEPCT", #neutrophils
-                  "LBXMOPCT", #monocytes
-                  "LBXBAPCT", #basophils
-                  "LBXEOPCT", #eosinophils
+                  "LBDLYMNO", #lymphocytes
+                  "LBDNENO", #neutrophils
+                  "LBDMONO", #monocytes
+                  "LBDBANO", #basophils
+                  "LBDEONO", #eosinophils
                   "LBXWBCSI", #WBC count
                   "LBXRBCSI", #RBC count
                   "LBXMCVSI",  #MCV
@@ -101,7 +101,7 @@ table_2_weighted <- function(nhanes_subset,
                   -mec2_clean)
   sum(is.na(vars_weights_clean$weights_adjusted))
   sum(vars_weights_clean$weights_adjusted)
-  #188 million - that's probably not right (should get about 209-230 million adults in US)
+  #188 million
   
   #############################################################################################################
   ######################################## Create Survey Design Object ########################################
@@ -114,11 +114,11 @@ table_2_weighted <- function(nhanes_subset,
   
   # Clean up the dataset, set the variable order
   LR_data <- vars_weights_clean %>%
-    dplyr::select("LBXLYPCT", #lymphocytes
-                  "LBXNEPCT", #neutrophils
-                  "LBXMOPCT", #monocytes
-                  "LBXBAPCT", #basophils
-                  "LBXEOPCT", #eosinophils
+    dplyr::select("LBDLYMNO", #lymphocytes
+                  "LBDNENO", #neutrophils
+                  "LBDMONO", #monocytes
+                  "LBDBANO", #basophils
+                  "LBDEONO", #eosinophils
                   "LBXWBCSI", #WBC count
                   "LBXRBCSI", #RBC count
                   "LBXMCVSI",  #MCV
@@ -127,11 +127,11 @@ table_2_weighted <- function(nhanes_subset,
                   weights_adjusted)
   
   # Set the labels for all the variables
-  LR_data$LBXLYPCT <- set_label(LR_data$LBXLYPCT, "Lymphocytes (%)")
-  LR_data$LBXNEPCT <- set_label(LR_data$LBXNEPCT, "Neutrophils (%)")
-  LR_data$LBXMOPCT <- set_label(LR_data$LBXMOPCT, "Monocytes (%)")
-  LR_data$LBXBAPCT <- set_label(LR_data$LBXBAPCT, "Basophils (%)")
-  LR_data$LBXEOPCT <- set_label(LR_data$LBXEOPCT, "Eosinophils (%)")
+  LR_data$LBDLYMNO <- set_label(LR_data$LBDLYMNO, "Lymphocytes (1000 cells/uL)")
+  LR_data$LBDNENO <- set_label(LR_data$LBDNENO, "Neutrophils (1000 cells/uL)")
+  LR_data$LBDMONO <- set_label(LR_data$LBDMONO, "Monocytes (1000 cells/uL)")
+  LR_data$LBDBANO <- set_label(LR_data$LBDBANO, "Basophils (1000 cells/uL)")
+  LR_data$LBDEONO <- set_label(LR_data$LBDEONO, "Eosinophils (1000 cells/uL)")
   LR_data$LBXWBCSI <- set_label(LR_data$LBXWBCSI, "White Blood Cells (1000 cells/uL)")
   LR_data$LBXRBCSI <- set_label(LR_data$LBXRBCSI, "Red Blood Cells (million cells/uL)")
   LR_data$LBXMCVSI <- set_label(LR_data$LBXMCVSI, "Mean Corpuscular Volume (fL)")
@@ -152,11 +152,11 @@ table_2_weighted <- function(nhanes_subset,
 
   # MEAN (SD)
   unwt_mean <- LR_data %>%
-    tbl_summary(include = c(LBXLYPCT,
-                            LBXNEPCT,
-                            LBXMOPCT,
-                            LBXBAPCT,
-                            LBXEOPCT,
+    tbl_summary(include = c(LBDLYMNO,
+                            LBDNENO,
+                            LBDMONO,
+                            LBDBANO,
+                            LBDEONO,
                             LBXWBCSI,
                             LBXRBCSI,
                             LBXMCVSI),
@@ -171,11 +171,11 @@ table_2_weighted <- function(nhanes_subset,
   
   # MEDIAN (IQR)
   unwt_median <- LR_data %>%
-    tbl_summary(include = c(LBXLYPCT,
-                            LBXNEPCT,
-                            LBXMOPCT,
-                            LBXBAPCT,
-                            LBXEOPCT,
+    tbl_summary(include = c(LBDLYMNO,
+                            LBDNENO,
+                            LBDMONO,
+                            LBDBANO,
+                            LBDEONO,
                             LBXWBCSI,
                             LBXRBCSI,
                             LBXMCVSI),
@@ -190,11 +190,11 @@ table_2_weighted <- function(nhanes_subset,
   
   # RANGE
   unwt_range <- LR_data %>%
-    tbl_summary(include = c(LBXLYPCT,
-                            LBXNEPCT,
-                            LBXMOPCT,
-                            LBXBAPCT,
-                            LBXEOPCT,
+    tbl_summary(include = c(LBDLYMNO,
+                            LBDNENO,
+                            LBDMONO,
+                            LBDBANO,
+                            LBDEONO,
                             LBXWBCSI,
                             LBXRBCSI,
                             LBXMCVSI),
@@ -214,11 +214,11 @@ table_2_weighted <- function(nhanes_subset,
   
   # MEAN (SD)
   wt_mean <- NHANES.svy %>%
-    tbl_svysummary(include = c(LBXLYPCT,
-                               LBXNEPCT,
-                               LBXMOPCT,
-                               LBXBAPCT,
-                               LBXEOPCT,
+    tbl_svysummary(include = c(LBDLYMNO,
+                               LBDNENO,
+                               LBDMONO,
+                               LBDBANO,
+                               LBDEONO,
                                LBXWBCSI,
                                LBXRBCSI,
                                LBXMCVSI),
@@ -233,11 +233,11 @@ table_2_weighted <- function(nhanes_subset,
   
   # MEDIAN (IQR)
   wt_median <- NHANES.svy %>%
-    tbl_svysummary(include = c(LBXLYPCT,
-                               LBXNEPCT,
-                               LBXMOPCT,
-                               LBXBAPCT,
-                               LBXEOPCT,
+    tbl_svysummary(include = c(LBDLYMNO,
+                               LBDNENO,
+                               LBDMONO,
+                               LBDBANO,
+                               LBDEONO,
                                LBXWBCSI,
                                LBXRBCSI,
                                LBXMCVSI),
@@ -252,11 +252,11 @@ table_2_weighted <- function(nhanes_subset,
   #Calculate IQR in the most convoluted way possible, but only because I got to the end and realized I can't convert a tibble back into a gtsummary object
   #and I'm not remaking code to calculate the survey adjusted IQR
   wt_iqr_calculations <- NHANES.svy %>%
-    tbl_svysummary(include = c(LBXLYPCT,
-                               LBXNEPCT,
-                               LBXMOPCT,
-                               LBXBAPCT,
-                               LBXEOPCT,
+    tbl_svysummary(include = c(LBDLYMNO,
+                               LBDNENO,
+                               LBDMONO,
+                               LBDBANO,
+                               LBDEONO,
                                LBXWBCSI,
                                LBXRBCSI,
                                LBXMCVSI),
@@ -285,11 +285,11 @@ table_2_weighted <- function(nhanes_subset,
   
   # RANGE
   wt_range <- NHANES.svy %>%
-    tbl_svysummary(include = c(LBXLYPCT,
-                               LBXNEPCT,
-                               LBXMOPCT,
-                               LBXBAPCT,
-                               LBXEOPCT,
+    tbl_svysummary(include = c(LBDLYMNO,
+                               LBDNENO,
+                               LBDMONO,
+                               LBDBANO,
+                               LBDEONO,
                                LBXWBCSI,
                                LBXRBCSI,
                                LBXMCVSI),
@@ -319,27 +319,27 @@ table_2_weighted <- function(nhanes_subset,
     modify_spanning_header(update = everything() ~ NA)
   
   # Merge unweighted and weighted - save as html
-  tbl_merge(tbls = list(unwt_stats, wt_stats),
-            tab_spanner = c("**Unweighted**", "**Weighted**")) %>%
-    as_gt() %>%
-    gtsave(filename = "table_2_unweighted-weighted.html")
+  # tbl_merge(tbls = list(unwt_stats, wt_stats),
+  #           tab_spanner = c("**Unweighted**", "**Weighted**")) %>%
+  #   as_gt() %>%
+  #   gtsave(filename = "table_2_unweighted-weighted_new.html")
   # Import table into Word and make any formatting edits (Insert, Text:Object:Text from file)
   
   # Merge unweighted and weighted - save as word doc
-  tbl_merge(tbls = list(unwt_stats, wt_stats),
-            tab_spanner = c("**Unweighted**", "**Weighted**")) %>%
-    as_flex_table() %>%
-    save_as_docx(path = "table_2_unweighted-weighted.docx")
+  # tbl_merge(tbls = list(unwt_stats, wt_stats),
+  #           tab_spanner = c("**Unweighted**", "**Weighted**")) %>%
+  #   as_flex_table() %>%
+  #   save_as_docx(path = "table_2_unweighted-weighted_new.docx")
   
   
   
   # Save Weighted and Unweighted tables separately
   unwt_stats %>%
     as_flex_table() %>%
-    save_as_docx(path = "table_2_unweighted.docx")
+    save_as_docx(path = "table_2_unweighted_new.docx")
   wt_stats %>%
     as_flex_table() %>%
-    save_as_docx(path = "table_2_weighted.docx")
+    save_as_docx(path = "table_2_weighted_new.docx")
   
   #############################################################################################################
   

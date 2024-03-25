@@ -14,6 +14,7 @@ download_packages <- function()
 {
   # Create vector of packages to install for this project
   packages_to_install <- c("tidyverse",
+                           "usefun",
                            "sjlabelled",
                            "magrittr",
                            "ggplot2",

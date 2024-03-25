@@ -34,11 +34,11 @@ table_demographics <- function(nhanes_subset)
                   "INDFMPIR", #PIR
                   "BMXWAIST", #waist
                   "SMOKING",  #smoking
-                  "LBXLYPCT", #lymphocytes
-                  "LBXNEPCT", #neutrophils
-                  "LBXMOPCT", #monocytes
-                  "LBXBAPCT", #basophils
-                  "LBXEOPCT", #eosinophils
+                  "LBDLYMNO", #lymphocytes
+                  "LBDNENO",  #neutrophils
+                  "LBDMONO",  #monocytes
+                  "LBDBANO",  #basophils
+                  "LBDEONO",  #eosinophils
                   "LBXWBCSI", #WBC count
                   "LBXRBCSI", #RBC count
                   "LBXMCVSI"  #MCV
@@ -131,7 +131,7 @@ table_demographics <- function(nhanes_subset)
   
   #Save table 1 continuous
   setwd(paste0(current_directory, "/Tables - Table 1"))
-  write.csv(table_1_contin, "table_1_contin.csv")
+  write.csv(table_1_contin, "table_1_contin_new.csv")
   
   
   #############################################################################################################
@@ -163,7 +163,7 @@ table_demographics <- function(nhanes_subset)
   View(table_1_categ)
   
   #Save
-  write.csv(table_1_categ, "table_1_categ.csv")
+  write.csv(table_1_categ, "table_1_categ_new.csv")
   
   #############################################################################################################
   ########################################## Table 2 - Immune Measures ########################################
@@ -171,19 +171,19 @@ table_demographics <- function(nhanes_subset)
   
   #table 2
   table_2 <- contin_creat %>%
-    filter(variable == "LBXLYPCT" |
-             variable == "LBXNEPCT" |
-             variable == "LBXMOPCT" |
-             variable == "LBXBAPCT" |
-             variable == "LBXEOPCT" |
-             variable == "LBXWBCSI" |
-             variable == "LBXRBCSI" |
-             variable == "LBXMCVSI") %>%
-    mutate(cell_order = case_when(variable == "LBXLYPCT" ~ 1,
-                                  variable == "LBXNEPCT" ~ 2,
-                                  variable == "LBXMOPCT" ~ 3,
-                                  variable == "LBXBAPCT" ~ 4,
-                                  variable == "LBXEOPCT" ~ 5,
+    filter(variable == "LBDLYMNO" |
+           variable == "LBDNENO" |
+           variable == "LBDMONO" |
+           variable == "LBDBANO" |
+           variable == "LBDEONO" |
+           variable == "LBXWBCSI" |
+           variable == "LBXRBCSI" |
+           variable == "LBXMCVSI") %>%
+    mutate(cell_order = case_when(variable == "LBDLYMNO" ~ 1,
+                                  variable == "LBDNENO" ~ 2,
+                                  variable == "LBDMONO" ~ 3,
+                                  variable == "LBDBANO" ~ 4,
+                                  variable == "LBDEONO" ~ 5,
                                   variable == "LBXWBCSI" ~ 6,
                                   variable == "LBXRBCSI" ~ 7,
                                   variable == "LBXMCVSI" ~ 8)) %>%
@@ -191,7 +191,7 @@ table_demographics <- function(nhanes_subset)
     dplyr::select(-cell_order)
   
   # Save Table 2
-  write.csv(table_2, "table_2.csv")
+  write.csv(table_2, "table_2_new.csv")
 
   
   #############################################################################################################

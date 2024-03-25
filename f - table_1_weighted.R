@@ -66,7 +66,7 @@ table_1_weighted <- function(nhanes_subset,
   # Check that all participants have weights
   summary(vars_12$WTMEC4YR)
   sum(is.na(vars_12$WTMEC4YR))
-  sum(!is.na(vars_12$WTMEC4YR))
+  sum(!is.na(vars_12$WTMEC4YR)) #8355
   
   
   # Make a subset of participants after cycle 2
@@ -334,27 +334,27 @@ table_1_weighted <- function(nhanes_subset,
     modify_spanning_header(update = everything() ~ NA)
   
   # Merge unweighted and weighted - save as html
-  tbl_merge(tbls = list(unwt_stats, wt_stats),
-            tab_spanner = c("**Unweighted**", "**Weighted**")) %>%
-    as_gt() %>%
-    gtsave(filename = "table_1_unweighted-weighted.html")
+  # tbl_merge(tbls = list(unwt_stats, wt_stats),
+  #           tab_spanner = c("**Unweighted**", "**Weighted**")) %>%
+  #   as_gt() %>%
+  #   gtsave(filename = "table_1_unweighted-weighted_new.html")
   # Import table into Word and make any formatting edits (Insert, Text:Object:Text from file)
   
   # Merge unweighted and weighted - save as word doc
-  tbl_merge(tbls = list(unwt_stats, wt_stats),
-            tab_spanner = c("**Unweighted**", "**Weighted**")) %>%
-    as_flex_table() %>%
-    save_as_docx(path = "table_1_unweighted-weighted.docx")
+  # tbl_merge(tbls = list(unwt_stats, wt_stats),
+  #           tab_spanner = c("**Unweighted**", "**Weighted**")) %>%
+  #   as_flex_table() %>%
+  #   save_as_docx(path = "table_1_unweighted-weighted_new.docx")
   
   
   
   # Save Weighted and Unweighted tables separately
   unwt_stats %>%
     as_flex_table() %>%
-    save_as_docx(path = "table_1_unweighted.docx")
+    save_as_docx(path = "table_1_unweighted_new.docx")
   wt_stats %>%
     as_flex_table() %>%
-    save_as_docx(path = "table_1_weighted.docx")
+    save_as_docx(path = "table_1_weighted_new.docx")
   
   #############################################################################################################
   

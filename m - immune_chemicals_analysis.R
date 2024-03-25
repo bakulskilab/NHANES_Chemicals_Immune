@@ -13,7 +13,7 @@ setwd(current_directory)
 # demographics_clean <- readRDS("demographics_clean.rds")
 # list_master_files <- readRDS("list_master_files.rds")
 # response_clean <- readRDS("response_clean.rds")
-survey_weights <- readRDS("weights_clean.rds")
+# survey_weights <- readRDS("weights_clean.rds")
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  Download and Load Packages  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -33,8 +33,8 @@ create_folders()
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  Merge the Clean Datasets  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-chemicals_clean <- chemicals_clean %>%
-  dplyr::select(-study_year)
+# Note: load in the global environment now
+gc()
 
 source("f - merge_datasets_together.R", local=T)
 nhanes_merged_dataset <- merge_datasets_together(demographics_dataset = demographics_clean
@@ -90,16 +90,16 @@ limit_of_detection_bar_plots(subset_chemicals = use_these_chems)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  Make Table 1 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#tables 1 and 2 - unweighted
+#tables 1 and 2 - unweighted - rerun 3/25/24
 source("f - table_demographics.R", local=T)
 table_demographics(nhanes_subset = nhanes_subset_dataset)
 
-#table 1 - weighted - manually fix IQRs
+#table 1 - weighted - manually fix IQRs - rerun 3/25/24
 source("f - table_1_weighted.R", local=T)
 table_1_weighted(nhanes_subset = nhanes_subset_dataset,
                  demog_dataset = demographics_clean)
 
-#table 2 - weighted - manually fix IQRs and add adult normal range
+#table 2 - weighted - manually fix IQRs and add adult normal range - rerun 3/25/24
 source("f - table_2_weighted.R", local=T)
 table_2_weighted(nhanes_subset = nhanes_subset_dataset,
                  demog_dataset = demographics_clean)
@@ -108,7 +108,7 @@ table_2_weighted(nhanes_subset = nhanes_subset_dataset,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~  Put Together Chemicals File For Supplemental Table ~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#supplemental table 1 - reran 8/8/23
+#supplemental table 1 and 2 - rerun 8/8/23, 3/25/24
 source("f - supplemental_table_chemicals.R", local = TRUE)
 supplemental_table_chemicals(chem_master = list_master_files$Chemicals,
                              conversion = use_these_chems)
@@ -117,7 +117,8 @@ supplemental_table_chemicals(chem_master = list_master_files$Chemicals,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Make Inclusion/Exclusion Table ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#supplemental table 2
+#supplemental table 3 - rerun 3/25/24
+# Manually update the counts to be unweighted
 source("f - table_inclusion_exclusion.R", local=T)
 table_inclusion_exclusion(nhanes_subset = nhanes_subset_dataset,
                           nhanes_full_dataset = nhanes_merged_dataset,
@@ -127,7 +128,7 @@ table_inclusion_exclusion(nhanes_subset = nhanes_subset_dataset,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  Make Supplemental Table Chemicals ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#supplemental table 3 - updated 8/8/23
+#supplemental table 4 - updated 8/8/23, 3/25/24
 source("f - table_chem_cell_stats.R", local=T)
 table_chem_cell_stats(nhanes_subset = nhanes_subset_dataset,
                       subset_chemicals = use_these_chems)
@@ -136,7 +137,7 @@ table_chem_cell_stats(nhanes_subset = nhanes_subset_dataset,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  Make Supplemental Table Immune ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-# table 2
+# table ? - table of low normal and high counts - 3/25/24
 source("f - table_immune_category_stats.R", local=T)
 table_immune_category_stats(nhanes_subset = nhanes_subset_dataset)
 
@@ -258,10 +259,10 @@ forest_plot_lin_reg(model_stats = model_stats_smk_scaled,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Make Correlation Plots ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#supplemental figure 5 - rerun 8/8/23
-source("f - correlation_plot_unweight_weight.R", local = TRUE)
-correlation_plot_unweight_weight(model_stats_wt_adj = model_stats_smk_scaled,
-                                 model_stats_wt_unadj = model_stats_scale_no_smk)
+#supplemental figure 5 - rerun 8/8/23 - no longer included due to insignificance
+# source("f - correlation_plot_unweight_weight.R", local = TRUE)
+# correlation_plot_unweight_weight(model_stats_wt_adj = model_stats_smk_scaled,
+#                                  model_stats_wt_unadj = model_stats_scale_no_smk)
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
