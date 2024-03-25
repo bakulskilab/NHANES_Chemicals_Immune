@@ -17,7 +17,7 @@ long_nhanes_subset_scale_function <- function(nhanes_subset,
 {
   library(tidyverse)
   
-  setwd(current_directory)
+  # setwd(current_directory)
   
   chems <- subset_chemicals$chemical_codename_use
   
@@ -38,9 +38,20 @@ long_nhanes_subset_scale_function <- function(nhanes_subset,
 
   #############################################################################################################
 
+  immune <- c(
+              "LBDLYMNO", #lymphocyte counts
+              "LBDMONO",  #monocyte counts
+              "LBDNENO",  #neutrophil counts
+              "LBDEONO",  #eosinophil counts
+              "LBDBANO",  #basophil counts
+              "LBXWBCSI", #WBC count
+              "LBXRBCSI", #RBC count
+              "LBXMCVSI"  #MCV
+  )
+  
   #make the long dataset - grouped by chemicals and cell types
   long_chemicals_cells <- pivot_longer(data = long_chemicals,
-                                       cols = LBXLYPCT:LBXMCVSI,
+                                       cols = all_of(immune),
                                        names_to = "celltype_codename",
                                        values_to = "cell_measurement")
 
@@ -65,7 +76,7 @@ long_nhanes_subset_scale_function <- function(nhanes_subset,
   
   long_nhanes_subset_dataset$SDDSRVYR <- as.integer(long_nhanes_subset_dataset$SDDSRVYR)
 
-  print(str(long_nhanes_subset_dataset))
+  # print(str(long_nhanes_subset_dataset))
 
   #############################################################################################################
   return(long_nhanes_subset_dataset)

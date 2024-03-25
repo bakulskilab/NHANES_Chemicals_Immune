@@ -18,7 +18,7 @@ nhanes_subset_function <- function(nhanes_full_dataset,
   library(tidyverse)
   library(magrittr)
   
-  setwd(current_directory)
+  # setwd(current_directory)
 
   #TEMPORARY
   # nhanes_full_dataset <- nhanes_merged_dataset
@@ -36,15 +36,17 @@ nhanes_subset_function <- function(nhanes_full_dataset,
              "INDFMPIR", #poverty-income ratio
              "BMXWAIST", #waist circumference
              "SDDSRVYR", #cycle
-             "URXUCR"    #creatinine
-             )   
+             "URXUCR",   #creatinine
+             "LBXCOT"   #cotinine
+             ) 
+  
   
   #immune measures
-  immune <- c("LBXLYPCT", #lymphocytes percent
-              "LBXMOPCT", #monocytes percent
-              "LBXNEPCT", #neutrophils percent
-              "LBXEOPCT", #eosinophils percent
-              "LBXBAPCT", #basophils percent
+  immune <- c("LBDLYMNO", #lymphocyte counts
+              "LBDMONO",  #monocyte counts
+              "LBDNENO",  #neutrophil counts
+              "LBDEONO",  #eosinophil counts
+              "LBDBANO",  #basophil counts
               "LBXWBCSI", #WBC count
               "LBXRBCSI", #RBC count
               "LBXMCVSI"  #MCV
@@ -93,7 +95,7 @@ nhanes_subset_function <- function(nhanes_full_dataset,
                               {print("drop cotinine missings")} %T>%
                               {print(dim(.))} %>%
                               #46080   214
-                              
+          
                               #dropping participants with missing cell counts
                               drop_na(LBXWBCSI) %T>%
                               {print("drop WBC missings")} %T>%
@@ -103,11 +105,11 @@ nhanes_subset_function <- function(nhanes_full_dataset,
                               {print("drop RBC missings")} %T>%
                               {print(dim(.))} %>%
                               #46004   214
-                              drop_na(LBXLYPCT,
-                                      LBXMOPCT,
-                                      LBXNEPCT,
-                                      LBXEOPCT,
-                                      LBXBAPCT,
+                              drop_na(LBDLYMNO, 
+                                      LBDMONO, 
+                                      LBDNENO, 
+                                      LBDEONO, 
+                                      LBDBANO,
                                       LBXMCVSI) %>%
                               filter(!SEQN == "102389")  %T>%
                               {print("drop cell type missings")} %T>%
@@ -184,7 +186,7 @@ nhanes_subset_function <- function(nhanes_full_dataset,
     mutate(URXNAL = na_if(URXNAL, 5000000000)) %>%
     mutate(URXUCR = ifelse(URXUCR == 0, NA, URXUCR))
 
-  
+  # print(colnames(nhanes_creatinine))
   #############################################################################################################
   ################################## Create A Smoking Variable From Cotinine ##################################
   #############################################################################################################
@@ -202,13 +204,15 @@ nhanes_subset_function <- function(nhanes_full_dataset,
     dplyr::select(SEQN,
                   SDMVPSU,  #30 primary sampling units per cycle - mostly single counties, selected from strata
                   SDMVSTRA) #census region/metropolitan area/pop demographics
+  # print(colnames(survey_vars))
 
   #merge into nhanes_subset_smk
-  nhanes_subset_survey <- left_join(nhanes_subset_smk, survey_vars, by = "SEQN") %>%
-    relocate(c(SDMVPSU,
-               SDMVSTRA),
-             .after = SDDSRVYR)
+  nhanes_subset_survey <- left_join(nhanes_subset_smk, survey_vars, by = "SEQN") #%>%
+    # relocate(c("SDMVPSU",
+    #            "SDMVSTRA"),
+    #          .after = SDDSRVYR)
 
+  # print(colnames(nhanes_subset_survey))
 
   #############################################################################################################
   ######################################### Fix The Variable Classes ##########################################

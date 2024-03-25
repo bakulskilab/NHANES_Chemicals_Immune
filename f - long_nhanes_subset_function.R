@@ -18,7 +18,7 @@ long_nhanes_subset_function <- function(nhanes_subset,
   library(tidyverse)
   library(magrittr)
   
-  setwd(current_directory)
+  # setwd(current_directory)
   
   chems <- subset_chemicals$chemical_codename_use
   
@@ -52,12 +52,25 @@ long_nhanes_subset_function <- function(nhanes_subset,
   #                                value = cell_measurement, #these are the cell type measurements
   #                                LBXLYPCT:LBXMCVSI #these are the columns to adjust
   #                                )
+  
+  immune <- c(
+              "LBDLYMNO", #lymphocyte counts
+              "LBDMONO",  #monocyte counts
+              "LBDNENO",  #neutrophil counts
+              "LBDEONO",  #eosinophil counts
+              "LBDBANO",  #basophil counts
+              "LBXWBCSI", #WBC count
+              "LBXRBCSI", #RBC count
+              "LBXMCVSI"  #MCV
+              )
+  
   long_chemicals_cells <- pivot_longer(data = long_chemicals,
-                                       cols = LBXLYPCT:LBXMCVSI,
+                                       cols = all_of(immune), #LBXLYPCT:LBXMCVSI,
                                        names_to = "celltype_codename",
                                        values_to = "cell_measurement")
   # print(str(long_chemicals_cells))
-
+  # print(long_chemicals_cells$celltype_codename %>% unique(.))
+  
   rm(long_chemicals)
 
   #############################################################################################################
@@ -75,7 +88,7 @@ long_nhanes_subset_function <- function(nhanes_subset,
     mutate(RIAGENDR = relevel(factor(RIAGENDR), ref = "1"),
            RIDRETH1 = relevel(factor(RIDRETH1), ref = "3")) %>%
     ungroup()
-  
+
   long_nhanes_subset_dataset$SDDSRVYR <- as.integer(long_nhanes_subset_dataset$SDDSRVYR)
 
   print(str(long_nhanes_subset_dataset))

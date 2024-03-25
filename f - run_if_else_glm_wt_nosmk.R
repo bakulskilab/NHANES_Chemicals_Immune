@@ -2,6 +2,7 @@
 
 run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
                                      weights_dataset,
+                                     df_chem_master, 
                                      nhanes_subset)
 {
   library(tidyverse)
@@ -14,25 +15,36 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
   
   chem_codename <- chemical_immune_chunk$chemical_codename %>%
     unique(.)
-  # print(chem_codename)
+  print(chem_codename)
   
   #update the name to include WT to match the weights codenames for the chemicals
-  chem_weight_codename <- paste0("WT_", chem_codename)
+  if(chem_codename == "LBX138LA")
+  {
+    chem_weight_codename <- "WT_LBX138158LA"
+    
+  } else if(chem_codename == "LBX196LA") {
+    
+    chem_weight_codename <- "WT_LBX196203LA"
+    
+  } else {
+    
+    chem_weight_codename <- paste0("WT_", chem_codename)
+  }
   
   immune_codename <- chemical_immune_chunk$celltype_codename %>%
     unique(.)
   print(paste(immune_codename, chem_codename))
-  print(chem_codename)
+  # print(chem_codename)
   
   #Calculate the number of cycles per chemical
   # sort(unique(chemical_immune_chunk$SDDSRVYR))
   cycle_length <- length(unique(chemical_immune_chunk$SDDSRVYR))
-  # print(paste("Number of cycles:", cycle_length))
+  print(paste("Number of cycles:", cycle_length))
   print(unique(chemical_immune_chunk$SDDSRVYR))
   
   #remove NAs from entire dataset
-  chemical_immune_chunk <- chemical_immune_chunk %>%
-    na.omit()
+  chemical_immune_chunk <- chemical_immune_chunk
+  print(dim(chemical_immune_chunk))
 
   # grabs the unique data for the cycle year (SDDSRVYR) for non-NA chemical concentrations
   cycle_unique <- unique(chemical_immune_chunk$SDDSRVYR)
@@ -48,6 +60,7 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
 
   #select SEQN and chemical/immune combo
   subset_weights_dataset <- weights_dataset %>%
+    filter(SDDSRVYR != -1 ) %>%
     dplyr::select(SEQN,
                   all_of(chem_weight_codename))
   
@@ -78,6 +91,9 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
     ungroup()
   test_tab <- as.data.frame.matrix(table(test$chemical_codename, test$cycle_count))
   colnames(test_tab) <- paste0("cycle", 1:10)
+  
+  df_problematic_pesticides <- find_problematic_pesticides(df_chem_master)
+  
   identifiers <- test_tab %>%
     mutate(category_id = case_when(cycle1 == 1 & cycle2 == 0 ~ "1 or 2",
                                    cycle2 == 1 & cycle1 == 0 ~ "1 or 2",
@@ -87,6 +103,12 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
   # View(identifiers)
   # #so there are some chemicals that are only measured in cycle 1 and not 2 and also 2 and not 1
 
+  index_problematic_pesticides <- which(rownames(identifiers) %in% df_problematic_pesticides$chemical_codename_use)
+  # print(rownames(identifiers)[index_problematic_pesticides])
+  
+  identifiers[index_problematic_pesticides,"category_id"] <- "1 or 2"
+  # View(identifiers)
+  
   #merge in the category_ids into chunk_weight_survey for categorization
   #make the rownames of identifiers into a column called chemical_codenames
   identifiers_chem <- rownames_to_column(identifiers, var = "chemical_codename")
@@ -126,11 +148,15 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
                         , INDFMPIR = I(chunk_and_ad_weight$INDFMPIR)
                         , BMXWAIST = I(chunk_and_ad_weight$BMXWAIST)
                         , URXUCR = I(chunk_and_ad_weight$URXUCR)
+                        , SMOKING = chunk_and_ad_weight$SMOKING
                         , cell_measurement = I(chunk_and_ad_weight$cell_measurement)
                         , chem_log_measurement = I(chunk_and_ad_weight$chem_log_measurement)
                         , SDMVPSU = chunk_and_ad_weight$SDMVPSU #stage 1 sampling unit in NHANES
                         , SDMVSTRA = chunk_and_ad_weight$SDMVSTRA #stratum to which the PSU belongs
-                        , adjusted_weights = chunk_and_ad_weight$adjusted_weights)
+                        , adjusted_weights = chunk_and_ad_weight$adjusted_weights) %>%
+    drop_na(SMOKING) 
+  print("Dimension of LR_data")
+  print(dim(LR_data))
 
 
   # print(LR_data$RIDRETH1 %>% levels(.))
@@ -141,6 +167,7 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
                           , weights = ~adjusted_weights
                           , data = LR_data
                           , nest = TRUE)
+  # print(NHANES.svy)
   
   # print("nhanes.svy design variable created")
 
@@ -149,16 +176,19 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
   #############################################################################################################
 
   #survey cycle >1 and blood
-  if (cycle_length > 1 & str_detect(chem_codename, "^LB")) {
-    min_cycle <- min(chemical_immune_chunk$SDDSRVYR, na.rm = TRUE)
+  if (cycle_length > 1 & str_detect(chem_codename, "^LB")) 
+  {
+    # print(as.numeric(LR_data$SDDSRVYR))
+    min_cycle <- min(as.numeric(LR_data$SDDSRVYR), na.rm = TRUE)
+    # print(min_cycle)
     print(1)
     # print(paste0("reference cycle: ", min_cycle))
     
-    chemical_immune_chunk$SDDSRVYR <- factor(chemical_immune_chunk$SDDSRVYR)
+    LR_data$SDDSRVYR <- factor(LR_data$SDDSRVYR)
     
-    # print(levels(chemical_immune_chunk$SDDSRVYR))
+    # print(levels(LR_data$SDDSRVYR))
     
-    model <- glm(cell_measurement ~
+    model <- svyglm(cell_measurement ~
                    chem_log_measurement+
                    RIDRETH1+
                    RIDAGEYR+
@@ -167,8 +197,8 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
                    BMXWAIST+
                    SDDSRVYR,
                  na.action = na.omit,
-                 # design = NHANES.svy,
-                 data = chemical_immune_chunk)
+                 design = NHANES.svy,
+                 data = LR_data)
     # print(tidy(model))
     print("chemical in more than one survey cycle")
     #   
@@ -178,9 +208,9 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
     if (cycle_length == 1 & str_detect(chem_codename, "^LB")) 
     {
       print(2)
-      print(paste0("survey cycle: ", unique(chemical_immune_chunk$SDDSRVYR)))
+      print(paste0("survey cycle: ", unique(LR_data$SDDSRVYR)))
       
-      model <- glm(cell_measurement ~
+      model <- svyglm(cell_measurement ~
                      chem_log_measurement+
                      RIDRETH1+
                      RIDAGEYR+
@@ -188,23 +218,27 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
                      INDFMPIR+
                      BMXWAIST,
                    na.action = na.omit,
-                   data = chemical_immune_chunk)
+                   design = NHANES.svy,
+                   data = LR_data)
       # print(tidy(model))
       print("chemical only in one survey cycle")
       #     
       #     #survey cycle >1 and urinary
     } else {
       if (cycle_length > 1 & str_detect(chem_codename, "^LB", negate = TRUE))  {
-        min_cycle <- min(chemical_immune_chunk$SDDSRVYR, na.rm = TRUE)
-        # print(3)
+        
+        print(3)
+        
+        min_cycle <- min(as.numeric(LR_data$SDDSRVYR), na.rm = TRUE)
+        # print(min_cycle)
         # print(paste0("reference cycle: ", min_cycle))
         
-        chemical_immune_chunk$SDDSRVYR <- factor(chemical_immune_chunk$SDDSRVYR)
+        LR_data$SDDSRVYR <- factor(LR_data$SDDSRVYR)
         
-        # print(levels(chemical_immune_chunk$SDDSRVYR))
+        # print(levels(LR_data$SDDSRVYR))
         
-        model <- glm(cell_measurement ~
-                       chem_log_measurement+
+        model <- svyglm(cell_measurement ~
+                       chem_log_measurement +
                        RIDRETH1+
                        RIDAGEYR+
                        RIAGENDR+
@@ -213,16 +247,17 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
                        URXUCR+
                        SDDSRVYR,
                      na.action = na.omit,
-                     data = chemical_immune_chunk)
+                     design = NHANES.svy,
+                     data = LR_data)
         # print(tidy(model))
         print("chemical in more than one survey cycle")
         #       
         #       
       } else { #survey cycle ==1 and urinary
-        # print(4)
-        # print(paste0("survey cycle: ", unique(chemical_immune_chunk$SDDSRVYR)))
+        print(4)
+        # print(paste0("survey cycle: ", unique(LR_data$SDDSRVYR)))
         
-        model <- glm(cell_measurement ~
+        model <- svyglm(cell_measurement ~
                        chem_log_measurement+
                        RIDRETH1+
                        RIDAGEYR+
@@ -231,7 +266,8 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
                        BMXWAIST+
                        URXUCR,
                      na.action = na.omit,
-                     data = chemical_immune_chunk)
+                     design = NHANES.svy,
+                     data = LR_data)
         # print(tidy(model))
         print("chemical only in one survey cycle")
       }
@@ -239,12 +275,23 @@ run_if_else_glm_wt_nosmk <- function(chemical_immune_chunk,
   }
 
   #############################################################################################################
+  #################################### Calculate sample size of each model ####################################
+  #############################################################################################################
+  
+  nobs <- glance(model) %>%
+    pull(nobs) %>%
+    unlist(.)
+  # print(nobs)
+  
+  
+  #############################################################################################################
   ######################################### Turn Regressions Into Table #######################################
   #############################################################################################################
-
+  
   #compile regression models using broom
   df_tidy <- tidy(model)
-  df_tidy <- as.data.frame(df_tidy)
+  df_tidy <- as.data.frame(df_tidy) %>%
+    mutate(nobs = nobs)
 
   return(df_tidy)
 }

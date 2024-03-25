@@ -13,6 +13,7 @@ setwd(current_directory)
 # demographics_clean <- readRDS("demographics_clean.rds")
 # list_master_files <- readRDS("list_master_files.rds")
 # response_clean <- readRDS("response_clean.rds")
+survey_weights <- readRDS("weights_clean.rds")
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  Download and Load Packages  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -45,12 +46,13 @@ nhanes_merged_dataset <- merge_datasets_together(demographics_dataset = demograp
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # source("f - limit_of_detection.R", local=T)
-source("f - identify_chemicals.R", local=T)
-use_these_chems <- identify_chemicals(nhanes_full_dataset = nhanes_merged_dataset,
-                                      nhanes_comments = comments_clean,
-                                      chemical_dataset = chemicals_clean,
-                                      chem_master = list_master_files$Chemicals,
-                                      weights_dataset = survey_weights)
+source("f - identify_chemicals_all_df.R", local=T)
+source("f - calculate_detection_frequency_degrees_freedom.R", local=T)
+use_these_chems <- identify_chemicals_all_df(nhanes_full_dataset = nhanes_merged_dataset,
+                                             nhanes_comments = comments_clean,
+                                             chemical_dataset = chemicals_clean,
+                                             chem_master = list_master_files$Chemicals,
+                                             weights_dataset = survey_weights)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Create The Working Dataset ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -60,6 +62,7 @@ source("f - nhanes_subset_function.R", local=T)
 nhanes_subset_dataset <- nhanes_subset_function(nhanes_full_dataset = nhanes_merged_dataset,
                                                 subset_chemicals = use_these_chems)
 
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Create The Long Working Dataset ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -68,6 +71,8 @@ nhanes_subset_dataset <- nhanes_subset_function(nhanes_full_dataset = nhanes_mer
 source("f - long_nhanes_subset_function.R", local=T)
 long_nhanes_subset_dataset <- long_nhanes_subset_function(nhanes_subset = nhanes_subset_dataset,
                                                           subset_chemicals = use_these_chems)
+
+
 #log2 and standardized
 source("f - long_nhanes_subset_scale_function.R", local=T)
 long_nhanes_subset_scale_dataset <- long_nhanes_subset_scale_function(nhanes_subset = nhanes_subset_dataset,
@@ -165,10 +170,18 @@ correlation_stats(subset_chemicals = use_these_chems,
 #unscaled for written results
 source("f - run_if_else_glm_weighted.R", local=T)
 source("f - run_linear_regression.R", local=T)
+
+time_start <- Sys.time()
 model_stats_smk <- run_linear_regression(long_nhanes_subset = long_nhanes_subset_dataset,
                                          conversion = use_these_chems,
                                          weights_dataset = survey_weights,
+                                         chem_master = list_master_files$Chemicals,
                                          nhanes_subset = nhanes_subset_dataset)
+time_end <- Sys.time()
+time_end - time_start
+
+problematic_chem <- ensure_pop_detect_freq_same_regression(df_inclusion_criteria = use_these_chems
+                                       , df_regression = model_stats_smk)
 
 setwd(paste0(current_directory, "/Regression Results"))
 write.csv(model_stats_smk_clean, "model_stats_smk.csv", row.names = FALSE)
@@ -177,10 +190,15 @@ setwd(current_directory)
 #scaled for figures
 source("f - run_if_else_glm_weighted.R", local=T)
 source("f - run_linear_regression.R", local=T)
+
 model_stats_smk_scaled <- run_linear_regression(long_nhanes_subset = long_nhanes_subset_scale_dataset,
                                                 conversion = use_these_chems,
                                                 weights_dataset = survey_weights,
+                                                chem_master = list_master_files$Chemicals,
                                                 nhanes_subset = nhanes_subset_dataset)
+
+problematic_chem_smk_scaled <- ensure_pop_detect_freq_same_regression(df_inclusion_criteria = use_these_chems
+                                                           , df_regression = model_stats_smk_scaled)
 
 setwd(paste0(current_directory, "/Regression Results"))
 write.csv(model_stats_smk_scaled, "model_stats_smk_scaled.csv", row.names = FALSE)
@@ -199,10 +217,15 @@ interpret_beta(model_stats = model_stats_smk)
 
 source("f - run_if_else_glm_wt_nosmk.R", local=T)
 source("f - run_linear_regression_no_smk.R", local=T)
+
 model_stats_scale_no_smk <- run_linear_regression_no_smk(long_nhanes_subset = long_nhanes_subset_scale_dataset,
                                                          conversion = use_these_chems,
                                                          weights_dataset = survey_weights,
+                                                         chem_master = list_master_files$Chemicals,
                                                          nhanes_subset = nhanes_subset_dataset)
+
+problematic_chem_no_smk <- ensure_pop_detect_freq_same_regression(df_inclusion_criteria = use_these_chems
+                                                           , df_regression = model_stats_scale_no_smk)
 
 setwd(paste0(current_directory, "/Regression Results"))
 write.csv(model_stats_scale_no_smk, "model_stats_scale_no_smk.csv", row.names = FALSE)
