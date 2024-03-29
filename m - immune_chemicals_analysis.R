@@ -145,13 +145,13 @@ table_immune_category_stats(nhanes_subset = nhanes_subset_dataset)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Make Correlation Plots ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#figure 2 and supplemental table 4 - updated 8/8/23
+#figure 2 and supplemental table 4 - updated 8/8/23, 3/26/24
 source("f - correlation_plot_chemicals.R", local = TRUE)
 correlation_plot_chemicals(subset_chemicals = use_these_chems,
                            nhanes_subset = nhanes_subset_dataset,
                            conversion = use_these_chems)
 
-#supplemental figure 3 and supplemental table 5
+#supplemental figure 3 and supplemental table 5 - reran 3/26/24
 source("f - correlation_plot_immune.R", local = TRUE)
 correlation_plot_immune(nhanes_subset = nhanes_subset_dataset)
 
@@ -159,7 +159,7 @@ correlation_plot_immune(nhanes_subset = nhanes_subset_dataset)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Calculate Correlation Stats ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#correlations of chemicals within chemical classes
+#correlations of chemicals within chemical classes - reran 3/26/24
 source("f - correlation_stats.R", local = TRUE)
 correlation_stats(subset_chemicals = use_these_chems,
                   nhanes_subset = nhanes_subset_dataset)
@@ -168,7 +168,7 @@ correlation_stats(subset_chemicals = use_these_chems,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~  Weighted Linear Regression, Adjusted for Cotinine ~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#unscaled for written results
+#unscaled for written results - reran 3/25/24
 source("f - run_if_else_glm_weighted.R", local=T)
 source("f - run_linear_regression.R", local=T)
 
@@ -184,9 +184,10 @@ time_end - time_start
 problematic_chem <- ensure_pop_detect_freq_same_regression(df_inclusion_criteria = use_these_chems
                                        , df_regression = model_stats_smk)
 
-setwd(paste0(current_directory, "/Regression Results"))
-write.csv(model_stats_smk_clean, "model_stats_smk.csv", row.names = FALSE)
-setwd(current_directory)
+# source("f - save_lin_reg_results.R", local=T)
+# save_lin_reg_results(model_stats = model_stats_smk)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 #scaled for figures
 source("f - run_if_else_glm_weighted.R", local=T)
@@ -209,6 +210,7 @@ setwd(current_directory)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Interpret Beta Coefficients ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
+#reran 3/26/24
 source("f - interpret_beta.R", local=T)
 interpret_beta(model_stats = model_stats_smk)
 
@@ -236,12 +238,12 @@ setwd(current_directory)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Volcano Plot ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#supp figure 4
+#supp figure 4 - rerun 3/26/24
 source("f - volcano_plot_lin_reg.R", local = TRUE)
 volcano_plot_lin_reg(model_stats = model_stats_smk_scaled,
                      conversion = use_these_chems)
 
-#figure 3
+#figure 3 - rerun 3/26/24
 source("f - significant_linear_chemical_plot.R", local = TRUE)
 significant_linear_chemical_plot(model_stats = model_stats_smk_scaled,
                                  conversion = use_these_chems)
@@ -250,7 +252,7 @@ significant_linear_chemical_plot(model_stats = model_stats_smk_scaled,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Forest Plots ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#figure 4 - reran 8/8/23
+#figure 4 - reran 8/8/23 - rerun 3/26/24
 source("f - forest_plot_lin_reg.R", local = TRUE)
 forest_plot_lin_reg(model_stats = model_stats_smk_scaled,
                     conversion = use_these_chems)
@@ -259,17 +261,17 @@ forest_plot_lin_reg(model_stats = model_stats_smk_scaled,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Make Correlation Plots ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#supplemental figure 5 - rerun 8/8/23 - no longer included due to insignificance
-# source("f - correlation_plot_unweight_weight.R", local = TRUE)
-# correlation_plot_unweight_weight(model_stats_wt_adj = model_stats_smk_scaled,
-#                                  model_stats_wt_unadj = model_stats_scale_no_smk)
+#supplemental figure 5 - rerun 8/8/23, 3/26/24
+source("f - correlation_plot_unweight_weight.R", local = TRUE)
+correlation_plot_unweight_weight(model_stats_wt_adj = model_stats_smk_scaled,
+                                 model_stats_wt_unadj = model_stats_scale_no_smk)
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Run Demographics Regressions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#linear regressions unscaled because no chemical covariates
+#linear regressions unscaled because no chemical covariates - rerun 3/26/24
 source("f - run_demog_regression.R", local=T)
 run_demog_regression(nhanes_subset = nhanes_subset_dataset,
                      conversion = use_these_chems,
@@ -279,10 +281,20 @@ run_demog_regression(nhanes_subset = nhanes_subset_dataset,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Run Logistic Regressions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#unscaled for written results
+#unscaled for written results - rerun 3/26/24
 source("f - run_logit_regression.R", local=T)
-run_logit_regression(long_nhanes_subset = long_nhanes_subset_dataset,
+run_logit_regression(nhanes_subset = nhanes_subset_dataset,
+                     long_nhanes_subset = long_nhanes_subset_dataset,
                      conversion = use_these_chems,
                      weights_dataset = survey_weights)
+
+
+# source("f - run_if_else_glm_logistic_wt.R", local=T)
+# source("f - run_logistic_regression.R", local=T)
+# model_stats_logistic <- run_logistic_regression(long_nhanes_subset = long_nhanes_subset_dataset,
+#                                                 conversion = use_these_chems,
+#                                                 weights_dataset = survey_weights,
+#                                                 chem_master = list_master_files$Chemicals,
+#                                                 nhanes_subset = nhanes_subset_dataset)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#

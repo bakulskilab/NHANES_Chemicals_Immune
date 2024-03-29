@@ -74,6 +74,19 @@ supplemental_table_chemicals <- function(chem_master,
            comments_codename_use,
            LOD,
            weight_codename) %>%
+    mutate(Matrix = case_when(str_detect(chemical_codename_use, "^LB") ~ "Blood",
+                              str_detect(chemical_codename_use, "^UR") ~ "Urine",
+                              str_detect(chemical_codename_use, "^SS") ~ "Urine")) %>%
+    mutate('Survey Years' = case_when(str_detect(SDDSRVYR, "10") ~ "2017-2018",
+                                      str_detect(SDDSRVYR, "9") ~ "2015-2016",
+                                      str_detect(SDDSRVYR, "8") ~ "2013-2014",
+                                      str_detect(SDDSRVYR, "7") ~ "2011-2012",
+                                      str_detect(SDDSRVYR, "6") ~ "2009-2010",
+                                      str_detect(SDDSRVYR, "5") ~ "2007-2008",
+                                      str_detect(SDDSRVYR, "4") ~ "2005-2006",
+                                      str_detect(SDDSRVYR, "3") ~ "2003-2004",
+                                      str_detect(SDDSRVYR, "2") ~ "2001-2002",
+                                      str_detect(SDDSRVYR, "1") ~ "1999-2000")) %>%
     rename('Chemical Codename (analysis)' = chemical_codename_use,
            'Chemical Name' = chemical_name,
            'Units' = units,
@@ -83,7 +96,8 @@ supplemental_table_chemicals <- function(chem_master,
            'Chemical Family' = chem_family,
            'Comment Codename' = comments_codename_use,
            'LOD' =  LOD,
-           'Weight Codename' = weight_codename)
+           'Weight Codename' = weight_codename) %>%
+    relocate('Survey Years', .after = 'Survey Cycle')
 
   
   # Save Table
@@ -96,9 +110,11 @@ supplemental_table_chemicals <- function(chem_master,
   #############################################################################################################
   
   # Subset out the lipid chemicals
+  lipids <- conversion %>% filter(str_detect(chemical_name, "(?i)Lipid")) %>% pull(chemical_codename_use)
   lipid_chems <- chem_master %>%
     filter(str_detect(chemical_name, "(?i)Lipid")) %>%
     mutate(chemical_name_only = gsub("\\s\\(([^()]+)\\)$", "", chemical_name)) %>%
+    filter(chemical_codename_use %in% lipids) %>%
     select(chemical_codename_use,
            chemical_name_only,
            units,

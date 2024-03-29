@@ -304,6 +304,8 @@ correlation_stats <- function(subset_chemicals,
   print("other correlation")
   cor_family$`Other` <- mean(as.matrix(other_cor), na.rm = TRUE)
   
+  View(cor_family)
+  
   #save the table as a csv
   setwd(paste0(current_directory, "/Correlation Plots - Demog, Cells, Chemicals"))
   write.csv(cor_family, file = "chemical_family_correlations.csv", row.names = FALSE)

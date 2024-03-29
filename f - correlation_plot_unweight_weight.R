@@ -21,6 +21,9 @@ correlation_plot_unweight_weight <- function(model_stats_wt_adj,
   #weighted and cotinine
   wt_est <- model_stats_wt_adj %>%
     filter(term == "chem_log_measurement") %>% 
+    mutate(immune_measure = case_when(immune_measure == "Lymphocyte (1000 cells/uL)" ~ "Lymphocytes (1000 cells/uL)",
+                                      immune_measure == "Monocyte (1000 cells/uL)" ~ "Monocytes (1000 cells/uL)",
+                                      TRUE ~ immune_measure)) %>%
     dplyr::select(chemical_name,
                   chem_family,
                   immune_measure,
@@ -31,7 +34,10 @@ correlation_plot_unweight_weight <- function(model_stats_wt_adj,
            FDR_wt = FDR)
   #weighted and no cotinine
   wt_unadj_est <- model_stats_wt_unadj %>%
-    filter(term == "chem_log_measurement") %>% 
+    filter(term == "chem_log_measurement") %>%
+    mutate(immune_measure = case_when(immune_measure == "Lymphocyte (1000 cells/uL)" ~ "Lymphocytes (1000 cells/uL)",
+                                      immune_measure == "Monocyte (1000 cells/uL)" ~ "Monocytes (1000 cells/uL)",
+                                      TRUE ~ immune_measure)) %>%
     dplyr::select(chemical_name,
                   chem_family,
                   immune_measure,
@@ -148,11 +154,11 @@ correlation_plot_unweight_weight <- function(model_stats_wt_adj,
   
   #set up the order of the facets
   wt_unadj_adj$immune_measure <- factor(wt_unadj_adj$immune_measure,
-                                            levels = c("Lymphocytes (%)",
-                                                       "Neutrophils (%)",
-                                                       "Monocytes (%)",
-                                                       "Basophils (%)",
-                                                       "Eosinophils (%)",
+                                            levels = c("Lymphocytes (1000 cells/uL)",
+                                                       "Neutrophils (1000 cells/uL)",
+                                                       "Monocytes (1000 cells/uL)",
+                                                       "Basophils (1000 cells/uL)",
+                                                       "Eosinophils (1000 cells/uL)",
                                                        "WBC (1000 cells/uL)",
                                                        "RBC (million cells/uL)",
                                                        "Mean Corpuscular Volume (fL)"))
@@ -208,14 +214,14 @@ correlation_plot_unweight_weight <- function(model_stats_wt_adj,
 
   # Save the plot as a pdf for viewing at a high resolution
   print("weighted cotinine vs no cotinine estimates.pdf")
-  ggsave(filename = "new weighted cotinine vs no cotinine estimates1.pdf"
+  ggsave(filename = "new weighted cotinine vs no cotinine estimates_new.pdf"
          , plot = wt_unadj_adj_plot
          , width = 14
          , height = 9)
 
   # Save the plot as a png for presentation
   print("weighted cotinine vs no cotinine estimates.png")
-  ggsave(filename = "new weighted cotinine vs no cotinine estimates1.png"
+  ggsave(filename = "new weighted cotinine vs no cotinine estimates_new.png"
          , plot = wt_unadj_adj_plot
          , units = "in"
          , width = 14

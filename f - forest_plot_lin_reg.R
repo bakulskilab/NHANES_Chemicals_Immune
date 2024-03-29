@@ -2,7 +2,7 @@
 ################################################  FOREST PLOTS  ###############################################
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-# Purpose: This function creates forest plots of 196 chemicals and cell types
+# Purpose: This function creates forest plots of 198 chemicals and cell types
 #          
 # Inputs:   model_stats - tidy output of linear regression stats adjusted for demographics
 #           conversion - dataframe of chemicals to use and info about them
@@ -21,8 +21,8 @@ forest_plot_lin_reg <- function(model_stats,
   setwd(current_directory)
 
   #TEMPORARY  
-  conversion <- use_these_chems
-  model_stats <- model_stats_smk_scaled
+  # conversion <- use_these_chems
+  # model_stats <- model_stats_smk_scaled
 
   #############################################################################################################
   ########################################## FIX UP LINEAR REGRESSIONS ########################################
@@ -45,61 +45,63 @@ forest_plot_lin_reg <- function(model_stats,
            upper = estimate + (z_score*std.error))
 
   #calculate FDR just to have to number for reporting
-  model_stats_CI <- model_stats_CI %>%
-    group_by(celltype_codename) %>%
-    mutate(FDR = p.adjust(p.value, method = "fdr")) %>%
-    ungroup()
+  # model_stats_CI <- model_stats_CI %>%
+  #   group_by(celltype_codename) %>%
+  #   mutate(FDR = p.adjust(p.value, method = "fdr")) %>%
+  #   ungroup()
   
 #############################################################################################################
 ###################################### RENAME CHEMICALS AND CELL TYPES ######################################
 #############################################################################################################  
 
-  conversion_subset <- conversion %>%
-    dplyr::select(chemical_codename_use,
-                  chemical_name,
-                  chem_family) %>%
-    rename(chemical_codename = chemical_codename_use)
+  # conversion_subset <- conversion %>%
+  #   dplyr::select(chemical_codename_use,
+  #                 chemical_name,
+  #                 chem_family) %>%
+  #   rename(chemical_codename = chemical_codename_use)
   
   #merge in the chemical_names
-  merge_by <- c("chemical_codename", "chem_family", "chemical_name")
-  model_stats_names <- left_join(model_stats_CI, conversion_subset, by = merge_by)
+  # merge_by <- c("chemical_codename", "chem_family", "chemical_name")
+  model_stats_names <- model_stats_CI %>%
+    mutate(immune_measure = case_when(immune_measure == "Lymphocyte (1000 cells/uL)" ~ "Lymphocytes (1000 cells/uL)",
+                                      immune_measure == "Monocyte (1000 cells/uL)" ~ "Monocytes (1000 cells/uL)",
+                                      TRUE ~ immune_measure)) %>%
+    mutate(immune_measure = factor(immune_measure,
+                                   levels = c("Lymphocytes (1000 cells/uL)",
+                                              "Neutrophils (1000 cells/uL)",
+                                              "Monocytes (1000 cells/uL)",
+                                              "Basophils (1000 cells/uL)",
+                                              "Eosinophils (1000 cells/uL)",
+                                              "WBC (1000 cells/uL)",
+                                              "RBC (million cells/uL)",
+                                              "MCV (fL)")))
   
   #make a conversion for the cell types into names
-  celltype_codename <- c("LBXLYPCT", #lymphocytes
-                         "LBXMOPCT", #monocytes
-                         "LBXNEPCT", #neutrophils
-                         "LBXEOPCT", #eosinophils
-                         "LBXBAPCT", #basophils
-                         "LBXWBCSI", #WBC count
-                         "LBXRBCSI", #RBC count
-                         "LBXMCVSI" #MCV
-                        )
-  cell_name <- c("Lymphocytes (%)",
-                 "Monocytes (%)",
-                 "Neutrophils (%)",
-                 "Eosinophils (%)",
-                 "Basophils (%)",
-                 "WBC (1000 cells/uL)",
-                 "RBC (million cells/uL)",
-                 "MCV (fL)")
-  cell_conversion <- as.data.frame(cbind(celltype_codename,
-                                         cell_name))
-  cell_conversion$celltype_codename <- as.factor(cell_conversion$celltype_codename)
+  # celltype_codename <- c("LBDLYMNO", #lymphocytes
+  #                        "LBDNENO",  #neutrophils
+  #                        "LBDMONO",  #monocytes
+  #                        "LBDBANO",  #basophils
+  #                        "LBDEONO",  #eosinophils
+  #                        "LBXWBCSI", #WBC count
+  #                        "LBXRBCSI", #RBC count
+  #                        "LBXMCVSI"  #MCV
+  #                       )
+  # cell_name <- c("Lymphocytes (1000 cells/uL)",
+  #                "Monocytes (1000 cells/uL)",
+  #                "Neutrophils (1000 cells/uL)",
+  #                "Eosinophils (1000 cells/uL)",
+  #                "Basophils (1000 cells/uL)",
+  #                "WBC (1000 cells/uL)",
+  #                "RBC (million cells/uL)",
+  #                "MCV (fL)")
+  # cell_conversion <- as.data.frame(cbind(celltype_codename,
+  #                                        cell_name))
+  # cell_conversion$celltype_codename <- as.factor(cell_conversion$celltype_codename)
   
   #merge in the cell type names
-  model_stats_names$celltype_codename <- as.factor(model_stats_names$celltype_codename)
-  model_stats_names_cells <- left_join(model_stats_names, cell_conversion, by = "celltype_codename")
+  # model_stats_names$celltype_codename <- as.factor(model_stats_names$celltype_codename)
+  # model_stats_names_cells <- left_join(model_stats_names, cell_conversion, by = "celltype_codename")
   
-  #set up the order of the facets
-  model_stats_names_cells$cell_name <- factor(model_stats_names_cells$cell_name,
-                                              levels = c("Lymphocytes (%)",
-                                                         "Neutrophils (%)",
-                                                         "Monocytes (%)",
-                                                         "Basophils (%)",
-                                                         "Eosinophils (%)",
-                                                         "WBC (1000 cells/uL)",
-                                                         "RBC (million cells/uL)",
-                                                         "MCV (fL)"))
   
 #############################################################################################################
 ################################# DEFINE COLORS FOR FOREST PLOT - CHEM CLASSES ##############################
@@ -170,22 +172,22 @@ forest_plot_lin_reg <- function(model_stats,
                           , 25 )  # Other
   
   # Ensure that the levels of the chemical family are in a defined order to ensure proper color scheme
-  model_stats_names_cells$chem_family <- factor(model_stats_names_cells$chem_family
+  model_stats_names$chem_family <- factor(model_stats_names$chem_family
                                          , levels = chem_family_levels)
   
   #this drops the units from the chemical names
-  model_stats_names_cells$chemical_name <- gsub("\\s\\(([^()]+)\\)$"
-                                                , ""
-                                                , model_stats_names_cells$chemical_name)
+  model_stats_names$chemical_name <- gsub("\\s\\(([^()]+)\\)$"
+                                          , ""
+                                          , model_stats_names$chemical_name)
   
   #shorten this terrible name
-  model_stats_names_cells$chemical_name <- gsub("N-Acetyl-S-(2-hydroxy-3-methyl-3-butenyl)-L-cysteine + N-Acetyl-S-(2-hydroxy-2-methyl-3-butenyl)-L-cysteine",
-                                           "N-Acetyl-S-(2-hydroxy-2/3-methyl-3-butenyl)-L-cysteine",
-                                           model_stats_names_cells$chemical_name,
-                                           fixed = TRUE)
+  model_stats_names$chemical_name <- gsub("N-Acetyl-S-(2-hydroxy-3-methyl-3-butenyl)-L-cysteine + N-Acetyl-S-(2-hydroxy-2-methyl-3-butenyl)-L-cysteine",
+                                          "N-Acetyl-S-(2-hydroxy-2/3-methyl-3-butenyl)-L-cysteine",
+                                          model_stats_names$chemical_name,
+                                          fixed = TRUE)
   
   #add a numerical column to indicate the chemical families for sorting
-  model_stats_names_cells <- model_stats_names_cells %>%
+  model_stats_names_cells <- model_stats_names %>%
     mutate(num_chem_family =
              case_when(chem_family == "Acrylamide" ~ 1
                        # , "Melamine"
@@ -213,28 +215,26 @@ forest_plot_lin_reg <- function(model_stats,
   ###########################################################################################################
   
   # Vector of chemicals with large estimates
-  larger_estimate_chems <- c("LBXBSE",
-                             "LBXSCU",
-                             "URXHCTT",
+  larger_estimate_chems <- c("URXHCTT",
                              "URXCOTT",
-                             "URXNAL",
-                             "LBXFOR",
-                             "LBX4AL",
-                             "LBX3AL")
-  
-  #make a dataframe of chemicals that have large estimates for separate plotting
+                             "LBXCOT")
+
+  # make a dataframe of chemicals that have large estimates for separate plotting
   model_stats_large_est <- model_stats_names_cells %>%
     filter(chemical_codename %in% larger_estimate_chems) %>%
     droplevels(.)
-  
+
   # Re-define a string vector of color hexcodes for the chemical family in corresponding order
-  chem_family_colors_large <- c("#228B22",    # Metals
-                                "#8B4513",    # Smoking
-                                "#0E1171")    # Aldehydes
+  # chem_family_colors_large <- c("#228B22",    # Metals
+  #                               "#8B4513",    # Smoking
+  #                               "#0E1171")    # Aldehydes
+  chem_family_colors_large <- c("#8B4513")
   # Re-define a string vector of shape codes for the chemical family in corresponding order
-  chem_family_shapes_large <- c(18,    # Metals
-                                16,    # Smoking
-                                16)    # Aldehydes
+  # chem_family_shapes_large <- c(18,    # Metals
+  #                               16,    # Smoking
+  #                               16)    # Aldehydes
+  chem_family_shapes_large <- c(16)    # Smoking
+                                
   
   #make a dataframe of the rest of the chemicals
   model_stats_small_est <- model_stats_names_cells %>%
@@ -280,12 +280,12 @@ forest_plot_lin_reg <- function(model_stats,
           legend.text = element_text(size = 9))+
     guides(colour = guide_legend(override.aes = list(size=1)))+
     #facet
-    facet_wrap(vars(cell_name),
+    facet_wrap(vars(immune_measure),
                ncol = 9,
                scales = "free_x")+
-    theme(strip.text = element_text(size=10,
+    theme(strip.text = element_text(size=7,
                                     face = "bold"))+
-    theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm"))
+    theme(plot.margin = unit(c(0, 0.3, 0, 0), "cm"))
   
   forest_plot_by_chem_fam_large <-
     ggplot(data = model_stats_large_est,
@@ -318,12 +318,12 @@ forest_plot_lin_reg <- function(model_stats,
           legend.text = element_text(size = 9))+
     guides(colour = guide_legend(override.aes = list(size=1)))+
     #facet
-    facet_wrap(vars(cell_name),
+    facet_wrap(vars(immune_measure),
                ncol = 9,
                scales = "free_x")+
     theme(strip.background = element_blank(),
           strip.text.x = element_blank())+
-    theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm"))
+    theme(plot.margin = unit(c(0, 0.3, 0, 0), "cm"))
 
   ###########################################################################################################
   ############################################### SAVE PLOTS ################################################
@@ -331,16 +331,16 @@ forest_plot_lin_reg <- function(model_stats,
   
   combined_forest <- plot_grid(forest_plot_by_chem_fam_small,
                                forest_plot_by_chem_fam_large,
-                               align = "v", nrow = 2, rel_heights = c(1/2, 1/28))
+                               align = "v", nrow = 2, rel_heights = c(6/10, 1/30))
   
   print("forest_plot_weighted_scaled.pdf")
-  save_plot(filename = "forest_plot_weighted_scaled.pdf",
+  save_plot(filename = "forest_plot_weighted_scaled_new.pdf",
             plot = combined_forest,
             base_width = 14,
             base_height = 9)
   
   print("forest_plot_weighted_scaled.png")
-  save_plot(filename = "forest_plot_weighted_scaled.png",
+  save_plot(filename = "forest_plot_weighted_scaled_new.png",
             plot = combined_forest,
             base_width = 14,
             base_height = 9,

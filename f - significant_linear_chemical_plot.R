@@ -44,21 +44,17 @@ significant_linear_chemical_plot <- function(conversion,
   #merge in the chemical names and families
   merge_by <- c("chemical_codename", "chem_family", "chemical_name")
   lin_model_clean <- left_join(lin_model_sig, conversion, by = merge_by) %>%
-    select(-term,
-           -above,
-           -total,
-           -percent_above_LOD,
-           -chem_family_shortened,
+    select(-chem_family_shortened,
            -comment_codename)
   
   #add column of immune labels for plotting later
   lin_model_lab <- lin_model_clean %>%
     mutate(immune_labels = 
-             case_when(celltype_codename == "LBXLYPCT" ~ "Lymphocytes (%)",
-                       celltype_codename == "LBXMOPCT" ~ "Monocytes (%)",
-                       celltype_codename == "LBXNEPCT" ~ "Neutrophils (%)",
-                       celltype_codename == "LBXEOPCT" ~ "Eosinophils (%)",
-                       celltype_codename == "LBXBAPCT" ~ "Basophils (%)",
+             case_when(celltype_codename == "LBDLYMNO" ~ "Lymphocytes (1000 cells/uL)",
+                       celltype_codename == "LBDMONO" ~ "Monocytes (1000 cells/uL)",
+                       celltype_codename == "LBDNENO" ~ "Neutrophils (1000 cells/uL)",
+                       celltype_codename == "LBDEONO" ~ "Eosinophils (1000 cells/uL)",
+                       celltype_codename == "LBDBANO" ~ "Basophils (1000 cells/uL)",
                        celltype_codename == "LBXWBCSI" ~ "White Blood Cells (1000 cells/uL)",
                        celltype_codename == "LBXRBCSI" ~ "Red Blood Cells (million cells/uL)",
                        celltype_codename == "LBXMCVSI" ~ "Mean Corpuscular Volume (fL)"))
@@ -69,12 +65,12 @@ significant_linear_chemical_plot <- function(conversion,
     filter(chem_family == "Metals")
   print("count of significant metals on at least one immune measure")
   print(length(unique(metals$chemical_codename)))
-  #22/26
+  #20/26
   smoking <- lin_model_lab %>%
     filter(chem_family == "Smoking Related Compounds")
   print("count of significant smoking on at least one immune measure")
   print(length(unique(smoking$chemical_codename)))
-  #3/4
+  #2/4
   phosphate <- lin_model_lab %>%
     filter(chem_family == "Phosphate Flame Retardants (PFR)")
   print("count of significant phosphate on at least one immune measure")
@@ -94,7 +90,7 @@ significant_linear_chemical_plot <- function(conversion,
   
   #How many unique chemicals are significant on any measure?
   length(unique(lin_model_lab$chemical_codename))
-  #122
+  #122 --> 71
   
   #Are any chems associated with all immune measures?
   all_assoc <- lin_model_lab %>%
@@ -105,17 +101,17 @@ significant_linear_chemical_plot <- function(conversion,
 
   
   #What is the average effect estimate by chemical family?
-  avg_effect_by_fam <- model_stats %>%
-    filter(immune_measure == "WBC (1000 cells/uL)") %>%
-    filter(term == "chem_log_measurement") %>%
-    dplyr::select(chemical_name,
-                  chem_family,
-                  immune_measure,
-                  estimate) %>%
-    group_by(chem_family) %>%
-    summarise(avg_est = mean(estimate)) %>%
-    ungroup() %>%
-    mutate(estimate_scaled = avg_est*1000)
+  # avg_effect_by_fam <- model_stats %>%
+  #   filter(immune_measure == "WBC (1000 cells/uL)") %>%
+  #   filter(term == "chem_log_measurement") %>%
+  #   dplyr::select(chemical_name,
+  #                 chem_family,
+  #                 immune_measure,
+  #                 estimate) %>%
+  #   group_by(chem_family) %>%
+  #   summarise(avg_est = mean(estimate)) %>%
+  #   ungroup() %>%
+  #   mutate(estimate_scaled = avg_est*1000)
   
   #############################################################################################################
   ######################################## Set Up Chemical Family Colors ######################################
@@ -161,10 +157,16 @@ significant_linear_chemical_plot <- function(conversion,
                          num_chems) %>%
     replace(is.na(.), 0)
   
-  #add a blank row for BFRs because they are missing
-  # bfrs <- c("Brominated Flame Retardants (BFR)", 0, 0, 0, 0, 0, 0, 0, 0)
-  # wide_lin <- rbind(wide_lin_sig, bfrs)
-  wide_lin_tidy <- wide_lin_sig %>% column_to_rownames("chem_family")
+  #add a blank row for chemical families without associations
+  bfr <- c("Brominated Flame Retardants (BFR)", 0, 0, 0, 0, 0, 0, 0, 0)
+  ald <- c("Aldehydes", 0, 0, 0, 0, 0, 0, 0, 0)
+  aro <- c("Aromatic Amines", 0, 0, 0, 0, 0, 0, 0, 0)
+  dix <- c("Dioxins", 0, 0, 0, 0, 0, 0, 0, 0)
+  fur <- c("Furans", 0, 0, 0, 0, 0, 0, 0, 0)
+  pfr <- c("Phosphate Flame Retardants (PFR)", 0, 0, 0, 0, 0, 0, 0, 0)
+  pcb <- c("Polychlorinated Biphenyls (PCB)", 0, 0, 0, 0, 0, 0, 0, 0)
+  wide_lin <- rbind(wide_lin_sig, bfr, ald, aro, dix, fur, pfr, pcb)
+  wide_lin_tidy <- wide_lin %>% column_to_rownames("chem_family")
   
   #calculate total significant chemicals per immune measure
   sum_sig_chems <- colSums(sapply(wide_lin_tidy, as.numeric))
@@ -177,11 +179,11 @@ significant_linear_chemical_plot <- function(conversion,
   #reorder the chemicals and immune columns
   wide_lin_order <- wide_lin_sum %>%
     select(chem_family,
-           `Lymphocytes (%)`,
-           `Neutrophils (%)`,
-           `Monocytes (%)`,
-           `Basophils (%)`,
-           `Eosinophils (%)`,
+           `Lymphocytes (1000 cells/uL)`,
+           `Neutrophils (1000 cells/uL)`,
+           `Monocytes (1000 cells/uL)`,
+           `Basophils (1000 cells/uL)`,
+           `Eosinophils (1000 cells/uL)`,
            `White Blood Cells (1000 cells/uL)`,
            `Red Blood Cells (million cells/uL)`,
            `Mean Corpuscular Volume (fL)`) %>%
@@ -206,11 +208,11 @@ significant_linear_chemical_plot <- function(conversion,
   
   #make a dataset of percent significant per chemical family
   chem_percent <- chem_total %>%
-    mutate(lym_pct = (as.numeric(`Lymphocytes (%)`) / count)*100,
-           neu_pct = (as.numeric(`Neutrophils (%)`) / count)*100,
-           mon_pct = (as.numeric(`Monocytes (%)`) / count)*100,
-           bas_pct = (as.numeric(`Basophils (%)`) / count)*100,
-           eos_pct = (as.numeric(`Eosinophils (%)`) / count)*100,
+    mutate(lym_pct = (as.numeric(`Lymphocytes (1000 cells/uL)`) / count)*100,
+           neu_pct = (as.numeric(`Neutrophils (1000 cells/uL)`) / count)*100,
+           mon_pct = (as.numeric(`Monocytes (1000 cells/uL)`) / count)*100,
+           bas_pct = (as.numeric(`Basophils (1000 cells/uL)`) / count)*100,
+           eos_pct = (as.numeric(`Eosinophils (1000 cells/uL)`) / count)*100,
            wbc_pct = (as.numeric(`White Blood Cells (1000 cells/uL)`) / count)*100,
            rbc_pct = (as.numeric(`Red Blood Cells (million cells/uL)`) / count)*100,
            mcv_pct = (as.numeric(`Mean Corpuscular Volume (fL)`) / count)*100) %>%
@@ -294,19 +296,30 @@ significant_linear_chemical_plot <- function(conversion,
     summarise(num_chems = n()) %>%
     ungroup()
   
-  #create a wide dataset and replace the NAs with zeros, add BFRs
+  #create a wide dataset for pos and neg and replace the NAs with zeros, add missing chemical families
   wide_lin_sig_pos <- spread(sig_lin_chems_pos,
                              immune_labels,
                              num_chems) %>%
     replace(is.na(.), 0)
-  wide_lin_sig_pos <- rbind(wide_lin_sig_pos, c("Brominated Flame Retardants (BFR)", 0, 0, 0, 0, 0, 0, 0, 0))
-  wide_lin_sig_pos <- rbind(wide_lin_sig_pos, c("Phosphate Flame Retardants (PFR)", 0, 0, 0, 0, 0, 0, 0, 0))
-  wide_lin_sig_neg <- spread(sig_lin_chems_neg,
+  wide_lin_sig_pos <- rbind(wide_lin_sig_pos, bfr, ald, aro, dix, fur, pfr, pcb)
+  wide_lin_sig_neg_temp <- spread(sig_lin_chems_neg,
                              immune_labels,
                              num_chems) %>%
-    replace(is.na(.), 0)
-  wide_lin_sig_neg <- rbind(wide_lin_sig_neg, c("Brominated Flame Retardants (BFR)", 0, 0, 0, 0, 0, 0, 0, 0))
-  # wide_lin_sig_neg <- rbind(wide_lin_sig_neg, c("Furans", 0, 0, 0, 0, 0, 0, 0, 0))
+    replace(is.na(.), 0) %>%
+    add_column(`Basophils (1000 cells/uL)` = 0,
+               `Eosinophils (1000 cells/uL)` = 0) %>%
+    select(chem_family,
+           `Lymphocytes (1000 cells/uL)`,
+           `Neutrophils (1000 cells/uL)`,
+           `Monocytes (1000 cells/uL)`,
+           `Basophils (1000 cells/uL)`,
+           `Eosinophils (1000 cells/uL)`,
+           `White Blood Cells (1000 cells/uL)`,
+           `Red Blood Cells (million cells/uL)`,
+           `Mean Corpuscular Volume (fL)`)
+  acrl <- c("Acrylamide", 0, 0, 0, 0, 0, 0, 0, 0)
+  smk <- c("Smoking Related Compounds", 0, 0, 0, 0, 0, 0, 0, 0)
+  wide_lin_sig_neg <- rbind(wide_lin_sig_neg_temp, acrl, bfr, ald, aro, dix, fur, pfr, pcb, smk)
   
   #turn chem_family row into row names
   wide_lin_tidy_pos <- wide_lin_sig_pos %>% column_to_rownames("chem_family")
@@ -327,11 +340,11 @@ significant_linear_chemical_plot <- function(conversion,
   #reorder the chemicals and immune columns
   wide_lin_order_pos <- wide_lin_sum_pos %>%
     select(chem_family,
-           `Lymphocytes (%)`,
-           `Neutrophils (%)`,
-           `Monocytes (%)`,
-           `Basophils (%)`,
-           `Eosinophils (%)`,
+           `Lymphocytes (1000 cells/uL)`,
+           `Neutrophils (1000 cells/uL)`,
+           `Monocytes (1000 cells/uL)`,
+           `Basophils (1000 cells/uL)`,
+           `Eosinophils (1000 cells/uL)`,
            `White Blood Cells (1000 cells/uL)`,
            `Red Blood Cells (million cells/uL)`,
            `Mean Corpuscular Volume (fL)`) %>%
@@ -339,11 +352,11 @@ significant_linear_chemical_plot <- function(conversion,
                    levels = chem_family_levels))
   wide_lin_order_neg <- wide_lin_sum_neg %>%
     select(chem_family,
-           `Lymphocytes (%)`,
-           `Neutrophils (%)`,
-           `Monocytes (%)`,
-           `Basophils (%)`,
-           `Eosinophils (%)`,
+           `Lymphocytes (1000 cells/uL)`,
+           `Neutrophils (1000 cells/uL)`,
+           `Monocytes (1000 cells/uL)`,
+           `Basophils (1000 cells/uL)`,
+           `Eosinophils (1000 cells/uL)`,
            `White Blood Cells (1000 cells/uL)`,
            `Red Blood Cells (million cells/uL)`,
            `Mean Corpuscular Volume (fL)`) %>%
@@ -371,11 +384,11 @@ significant_linear_chemical_plot <- function(conversion,
   
   #make a dataset of percent significant per chemical family
   chem_percent_pos <- chem_total_pos %>%
-    mutate(lym_pct = (as.numeric(`Lymphocytes (%)`) / count)*100,
-           neu_pct = (as.numeric(`Neutrophils (%)`) / count)*100,
-           mon_pct = (as.numeric(`Monocytes (%)`) / count)*100,
-           bas_pct = (as.numeric(`Basophils (%)`) / count)*100,
-           eos_pct = (as.numeric(`Eosinophils (%)`) / count)*100,
+    mutate(lym_pct = (as.numeric(`Lymphocytes (1000 cells/uL)`) / count)*100,
+           neu_pct = (as.numeric(`Neutrophils (1000 cells/uL)`) / count)*100,
+           mon_pct = (as.numeric(`Monocytes (1000 cells/uL)`) / count)*100,
+           bas_pct = (as.numeric(`Basophils (1000 cells/uL)`) / count)*100,
+           eos_pct = (as.numeric(`Eosinophils (1000 cells/uL)`) / count)*100,
            wbc_pct = (as.numeric(`White Blood Cells (1000 cells/uL)`) / count)*100,
            rbc_pct = (as.numeric(`Red Blood Cells (million cells/uL)`) / count)*100,
            mcv_pct = (as.numeric(`Mean Corpuscular Volume (fL)`) / count)*100) %>%
@@ -389,11 +402,11 @@ significant_linear_chemical_plot <- function(conversion,
            rbc_pct,
            mcv_pct)
   chem_percent_neg <- chem_total_neg %>%
-    mutate(lym_pct = (as.numeric(`Lymphocytes (%)`) / count)*100,
-           neu_pct = (as.numeric(`Neutrophils (%)`) / count)*100,
-           mon_pct = (as.numeric(`Monocytes (%)`) / count)*100,
-           bas_pct = (as.numeric(`Basophils (%)`) / count)*100,
-           eos_pct = (as.numeric(`Eosinophils (%)`) / count)*100,
+    mutate(lym_pct = (as.numeric(`Lymphocytes (1000 cells/uL)`) / count)*100,
+           neu_pct = (as.numeric(`Neutrophils (1000 cells/uL)`) / count)*100,
+           mon_pct = (as.numeric(`Monocytes (1000 cells/uL)`) / count)*100,
+           bas_pct = (as.numeric(`Basophils (1000 cells/uL)`) / count)*100,
+           eos_pct = (as.numeric(`Eosinophils (1000 cells/uL)`) / count)*100,
            wbc_pct = (as.numeric(`White Blood Cells (1000 cells/uL)`) / count)*100,
            rbc_pct = (as.numeric(`Red Blood Cells (million cells/uL)`) / count)*100,
            mcv_pct = (as.numeric(`Mean Corpuscular Volume (fL)`) / count)*100) %>%
@@ -427,7 +440,7 @@ significant_linear_chemical_plot <- function(conversion,
   
   setwd(paste0(current_directory, "/Volcano Plots"))
   
-  png("significant_lin_chems_by_pos_direction_smk.png", units = "in", width = 14, height = 9, res = 600)
+  png("significant_lin_chems_by_pos_direction_smk_new.png", units = "in", width = 14, height = 9, res = 600)
   pheatmap(mat = chem_percent_pos,
            cluster_rows = FALSE, cluster_cols = FALSE,
            labels_col = immune_measures,
@@ -441,7 +454,7 @@ significant_linear_chemical_plot <- function(conversion,
            display_numbers = chem_count_matrix_pos,
            color = colorRampPalette(c("white", "yellow", "orange", "red3"))(20))
   dev.off()
-  pdf("significant_lin_chems_by_pos_direction_smk.pdf", width = 14, height = 9)
+  pdf("significant_lin_chems_by_pos_direction_smk_new.pdf", width = 14, height = 9)
   pheatmap(mat = chem_percent_pos,
            cluster_rows = FALSE, cluster_cols = FALSE,
            labels_col = immune_measures,
@@ -463,7 +476,7 @@ significant_linear_chemical_plot <- function(conversion,
   myColor <- colorRampPalette(c("white", "deepskyblue", "blue3"))(paletteLength)
   breaksList = seq(0, 100, by = 1)
   
-  png("significant_lin_chems_by_neg_direction_smk.png", units = "in", width = 14, height = 9, res = 600)
+  png("significant_lin_chems_by_neg_direction_smk_new.png", units = "in", width = 14, height = 9, res = 600)
   pheatmap(mat = chem_percent_neg,
            cluster_rows = FALSE, cluster_cols = FALSE,
            labels_col = immune_measures,
@@ -478,7 +491,7 @@ significant_linear_chemical_plot <- function(conversion,
            color=myColor,
            breaks=breaksList)
   dev.off()
-  pdf("significant_lin_chems_by_neg_direction_smk.pdf", width = 14, height = 9)
+  pdf("significant_lin_chems_by_neg_direction_smk_new.pdf", width = 14, height = 9)
   pheatmap(mat = chem_percent_neg,
            cluster_rows = FALSE, cluster_cols = FALSE,
            labels_col = immune_measures,

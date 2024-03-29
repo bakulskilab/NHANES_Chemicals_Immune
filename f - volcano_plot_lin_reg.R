@@ -39,30 +39,29 @@ volcano_plot_lin_reg <- function(model_stats,
   model_unclean <- model_adjust %>%
     mutate(Significance = ifelse(.$FDR <0.05, "FDR < 0.05", "Not Significant")) %>%
     mutate(immune_labels = 
-             case_when(celltype_codename == "LBXLYPCT" ~ "Lymphocytes (%)",
-                       celltype_codename == "LBXMOPCT" ~ "Monocytes (%)",
-                       celltype_codename == "LBXNEPCT" ~ "Neutrophils (%)",
-                       celltype_codename == "LBXEOPCT" ~ "Eosinophils (%)",
-                       celltype_codename == "LBXBAPCT" ~ "Basophils (%)",
+             case_when(celltype_codename == "LBDLYMNO" ~ "Lymphocytes (1000 cells/uL)",
+                       celltype_codename == "LBDMONO" ~ "Monocytes (1000 cells/uL)",
+                       celltype_codename == "LBDNENO" ~ "Neutrophils (1000 cells/uL)",
+                       celltype_codename == "LBDEONO" ~ "Eosinophils (1000 cells/uL)",
+                       celltype_codename == "LBDBANO" ~ "Basophils (1000 cells/uL)",
                        celltype_codename == "LBXWBCSI" ~ "White Blood Cells (1000 cells/uL)",
                        celltype_codename == "LBXRBCSI" ~ "Red Blood Cells (million cells/uL)",
                        celltype_codename == "LBXMCVSI" ~ "Mean Corpuscular Volume (fL)")
            )
+  # View(model_unclean)
     
   
   #merge in the chemical names
   join_by <- c("chemical_codename", "chem_family", "chemical_name")
-  model_clean <- left_join(model_unclean, conversion, by = ) %>%
-    select(-above,
-           -total,
-           -percent_above_LOD,
-           -chem_family_shortened,
+  model_clean <- left_join(model_unclean, conversion, by = join_by) %>%
+    select(-chem_family_shortened,
            -comment_codename)
+  
   
   #add labels for only significant points
   model_clean <- model_clean %>%
     mutate(chem_labels = ifelse(.$FDR <0.05, chemical_name, ""))
-  
+  # View(model_clean)
   
   #############################################################################################################
   ############################################# SCALE THE ESTIMATE ############################################
@@ -89,20 +88,20 @@ volcano_plot_lin_reg <- function(model_stats,
   #############################################################################################################
   
   #make a conversion for the cell types into names
-  celltype_codename <- c("LBXLYPCT", #lymphocytes
-                         "LBXMOPCT", #monocytes
-                         "LBXNEPCT", #neutrophils
-                         "LBXEOPCT", #eosinophils
-                         "LBXBAPCT", #basophils
+  celltype_codename <- c("LBDLYMNO", #lymphocytes
+                         "LBDNENO",  #neutrophils
+                         "LBDMONO",  #monocytes
+                         "LBDBANO",  #basophils
+                         "LBDEONO",  #eosinophils
                          "LBXWBCSI", #WBC count
                          "LBXRBCSI", #RBC count
-                         "LBXMCVSI" #MCV
+                         "LBXMCVSI"  #MCV
                          )
-  cell_name <- c("Lymphocytes (%)",
-                 "Monocytes (%)",
-                 "Neutrophils (%)",
-                 "Eosinophils (%)",
-                 "Basophils (%)",
+  cell_name <- c("Lymphocytes (1000 cells/uL)",
+                 "Monocytes (1000 cells/uL)",
+                 "Neutrophils (1000 cells/uL)",
+                 "Eosinophils (1000 cells/uL)",
+                 "Basophils (1000 cells/uL)",
                  "WBC (1000 cells/uL)",
                  "RBC (million cells/uL)",
                  "Mean Corpuscular Volume (fL)"
@@ -117,14 +116,16 @@ volcano_plot_lin_reg <- function(model_stats,
   
   #set up the order of the facets
   model_clean$cell_name <- factor(model_clean$cell_name,
-                                      levels = c("Lymphocytes (%)",
-                                                 "Neutrophils (%)",
-                                                 "Monocytes (%)",
-                                                 "Basophils (%)",
-                                                 "Eosinophils (%)",
+                                      levels = c("Lymphocytes (1000 cells/uL)",
+                                                 "Monocytes (1000 cells/uL)",
+                                                 "Neutrophils (1000 cells/uL)",
+                                                 "Eosinophils (1000 cells/uL)",
+                                                 "Basophils (1000 cells/uL)",
                                                  "WBC (1000 cells/uL)",
                                                  "RBC (million cells/uL)",
-                                                 "Mean Corpuscular Volume (fL)"))
+                                                 "Mean Corpuscular Volume (fL)"
+                                                 )
+                                  )
   
   #############################################################################################################
   ######################################## Set Up Chemical Family Colors ######################################
@@ -220,7 +221,7 @@ volcano_plot_lin_reg <- function(model_stats,
                label = chem_labels,
                color = chem_family,
                shape = chem_family))+
-    geom_point() +
+    geom_point(size = 2) +
     scale_color_manual(name = "Chemical Family"
                        , values = chem_family_colors)+
     scale_shape_manual(name = "Chemical Family",
@@ -232,10 +233,10 @@ volcano_plot_lin_reg <- function(model_stats,
     #           show.legend = FALSE)+
     ggrepel::geom_text_repel(
       # label = chem_labels,
-                             size = 4,
+                             size = 3,
                              box.padding = unit(0.5, "lines"),
-                             point.padding = unit(0.2, "lines"),
-                             max.overlaps = getOption("ggrepel.max.overlaps", default = 20),
+                             point.padding = unit(0.1, "lines"),
+                             max.overlaps = 40,
                              show.legend = FALSE
                              )+
     theme_bw()+
@@ -261,14 +262,14 @@ volcano_plot_lin_reg <- function(model_stats,
   
   # Save the plot as a pdf for viewing at a high resolution
   print("volcano_plot_lin_reg_wt_smk.pdf")
-  ggsave(filename = "volcano_plot_lin_reg_wt_smk.pdf"
+  ggsave(filename = "volcano_plot_lin_reg_wt_smk_new.pdf"
          , plot = gg_volcano_plot
          , width = 14
          , height = 9)
 
   # Save the plot as a png for presentation
   print("volcano_plot_lin_reg_wt_smk.png")
-  ggsave(filename = "volcano_plot_lin_reg_wt_smk.png"
+  ggsave(filename = "volcano_plot_lin_reg_wt_smk_new.png"
          , plot = gg_volcano_plot
          , units = "in"
          , width = 14

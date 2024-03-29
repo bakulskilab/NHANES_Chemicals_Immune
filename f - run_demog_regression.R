@@ -35,11 +35,11 @@ run_demog_regression <- function(nhanes_subset,
   # Select the variables to use from nhanes subset and demographics dataset
   nhanes_vars <- nhanes_subset %>%
     dplyr::select(SEQN,
-                  "LBXLYPCT", #lymphocytes
-                  "LBXNEPCT", #neutrophils
-                  "LBXMOPCT", #monocytes
-                  "LBXBAPCT", #basophils
-                  "LBXEOPCT", #eosinophils
+                  "LBDLYMNO", #lymphocytes
+                  "LBDNENO",  #neutrophils
+                  "LBDMONO",  #monocytes
+                  "LBDBANO",  #basophils
+                  "LBDEONO",  #eosinophils
                   "LBXWBCSI", #WBC count
                   "LBXRBCSI", #RBC count
                   "LBXMCVSI",  #MCV
@@ -135,14 +135,14 @@ run_demog_regression <- function(nhanes_subset,
   
   # Lymphocytes dataset (don't really need to pivot longer but it will make the code the same later)
   LR_data_ly <- vars_weights_clean %>%
-    dplyr::select(-"LBXNEPCT", #neutrophils
-                  -"LBXMOPCT", #monocytes
-                  -"LBXBAPCT", #basophils
-                  -"LBXEOPCT", #eosinophils
+    dplyr::select(-"LBDNENO",  #neutrophils
+                  -"LBDMONO",  #monocytes
+                  -"LBDBANO",  #basophils
+                  -"LBDEONO",  #eosinophils
                   -"LBXWBCSI", #WBC count
                   -"LBXRBCSI", #RBC count
-                  -"LBXMCVSI") %>%
-    pivot_longer(cols = "LBXLYPCT",
+                  -"LBXMCVSI"  ) %>% #MCV
+    pivot_longer(cols = "LBDLYMNO", #lymphocytes
                  names_to = "celltype_codename",
                  values_to = "cell_measurement") %>%
     dplyr::select(-SEQN) %>%
@@ -150,14 +150,14 @@ run_demog_regression <- function(nhanes_subset,
   
   # Neutrophils dataset
   LR_data_ne <- vars_weights_clean %>%
-    dplyr::select(-"LBXLYPCT", 
-                  -"LBXMOPCT",
-                  -"LBXBAPCT",
-                  -"LBXEOPCT",
+    dplyr::select(-"LBDLYMNO", 
+                  -"LBDMONO",
+                  -"LBDBANO",
+                  -"LBDEONO",
                   -"LBXWBCSI",
                   -"LBXRBCSI",
                   -"LBXMCVSI") %>%
-    pivot_longer(cols = "LBXNEPCT",
+    pivot_longer(cols = "LBDNENO",
                  names_to = "celltype_codename",
                  values_to = "cell_measurement") %>%
     dplyr::select(-SEQN) %>%
@@ -165,14 +165,14 @@ run_demog_regression <- function(nhanes_subset,
   
   # Monocytes dataset
   LR_data_mo <- vars_weights_clean %>%
-    dplyr::select(-"LBXLYPCT", 
-                  -"LBXNEPCT",
-                  -"LBXBAPCT",
-                  -"LBXEOPCT",
+    dplyr::select(-"LBDLYMNO", 
+                  -"LBDNENO",
+                  -"LBDBANO",
+                  -"LBDEONO",
                   -"LBXWBCSI",
                   -"LBXRBCSI",
                   -"LBXMCVSI") %>%
-    pivot_longer(cols = "LBXMOPCT",
+    pivot_longer(cols = "LBDMONO",
                  names_to = "celltype_codename",
                  values_to = "cell_measurement") %>%
     dplyr::select(-SEQN) %>%
@@ -180,14 +180,14 @@ run_demog_regression <- function(nhanes_subset,
   
   # Basophils dataset
   LR_data_ba <- vars_weights_clean %>%
-    dplyr::select(-"LBXLYPCT", 
-                  -"LBXNEPCT",
-                  -"LBXMOPCT",
-                  -"LBXEOPCT",
+    dplyr::select(-"LBDLYMNO", 
+                  -"LBDNENO",
+                  -"LBDMONO",
+                  -"LBDEONO",
                   -"LBXWBCSI",
                   -"LBXRBCSI",
                   -"LBXMCVSI") %>%
-    pivot_longer(cols = "LBXBAPCT",
+    pivot_longer(cols = "LBDBANO",
                  names_to = "celltype_codename",
                  values_to = "cell_measurement") %>%
     dplyr::select(-SEQN) %>%
@@ -195,14 +195,14 @@ run_demog_regression <- function(nhanes_subset,
   
   # Eosinophils dataset
   LR_data_eo <- vars_weights_clean %>%
-    dplyr::select(-"LBXLYPCT", 
-                  -"LBXNEPCT",
-                  -"LBXMOPCT",
-                  -"LBXBAPCT",
+    dplyr::select(-"LBDLYMNO", 
+                  -"LBDNENO",
+                  -"LBDMONO",
+                  -"LBDBANO",
                   -"LBXWBCSI",
                   -"LBXRBCSI",
                   -"LBXMCVSI") %>%
-    pivot_longer(cols = "LBXEOPCT",
+    pivot_longer(cols = "LBDEONO",
                  names_to = "celltype_codename",
                  values_to = "cell_measurement") %>%
     dplyr::select(-SEQN) %>%
@@ -210,11 +210,11 @@ run_demog_regression <- function(nhanes_subset,
   
   # WBC dataset
   LR_data_wbc <- vars_weights_clean %>%
-    dplyr::select(-"LBXLYPCT", 
-                  -"LBXNEPCT",
-                  -"LBXMOPCT",
-                  -"LBXBAPCT",
-                  -"LBXEOPCT",
+    dplyr::select(-"LBDLYMNO", 
+                  -"LBDNENO",
+                  -"LBDMONO",
+                  -"LBDBANO",
+                  -"LBDEONO",
                   -"LBXRBCSI",
                   -"LBXMCVSI") %>%
     pivot_longer(cols = "LBXWBCSI",
@@ -225,11 +225,11 @@ run_demog_regression <- function(nhanes_subset,
   
   # RBC dataset
   LR_data_rbc <- vars_weights_clean %>%
-    dplyr::select(-"LBXLYPCT", 
-                  -"LBXNEPCT",
-                  -"LBXMOPCT",
-                  -"LBXBAPCT",
-                  -"LBXEOPCT",
+    dplyr::select(-"LBDLYMNO", 
+                  -"LBDNENO",
+                  -"LBDMONO",
+                  -"LBDBANO",
+                  -"LBDEONO",
                   -"LBXWBCSI",
                   -"LBXMCVSI") %>%
     pivot_longer(cols = "LBXRBCSI",
@@ -240,11 +240,11 @@ run_demog_regression <- function(nhanes_subset,
   
   # MCV dataset
   LR_data_mcv <- vars_weights_clean %>%
-    dplyr::select(-"LBXLYPCT", 
-                  -"LBXNEPCT",
-                  -"LBXMOPCT",
-                  -"LBXBAPCT",
-                  -"LBXEOPCT",
+    dplyr::select(-"LBDLYMNO", 
+                  -"LBDNENO",
+                  -"LBDMONO",
+                  -"LBDBANO",
+                  -"LBDEONO",
                   -"LBXWBCSI",
                   -"LBXRBCSI") %>%
     pivot_longer(cols = "LBXMCVSI",
@@ -466,7 +466,7 @@ run_demog_regression <- function(nhanes_subset,
                                    df_regression_rb,
                                    df_regression_mc))
   # Multiple comparisons of age to different immune measures so adding the FDR
-  model_stats_demog$FDR <- p.adjust(model_stats_demog$p.value, method='fdr')
+  model_stats_demog$FDR <- p.adjust(model_stats_demog$p.value, method='BY')
   
   # Interpret the results for a 10-year increase in age
    chem_pct <- c("Lymphocytes",
@@ -474,25 +474,26 @@ run_demog_regression <- function(nhanes_subset,
                  "Monocytes",
                  "Basophils",
                  "Eosinophils")
+   # print("test")
   
   model_interpret <- model_stats_demog %>%
-    mutate(interpret = case_when(immune_measure %in% chem_pct ~ estimate*10,
+    mutate(interpret = case_when(immune_measure %in% chem_pct ~ estimate*1000*10,
                                  immune_measure == "White Blood Cells" ~ estimate * 1000*10,
                                  immune_measure == "Red Blood Cells" ~ estimate * 1000000*10,
                                  immune_measure == "Mean Corpuscular Volume" ~ estimate*10)) %>%
-    mutate(lower_ci = case_when(immune_measure %in% chem_pct ~ lower.CI*10,
+    mutate(lower_ci = case_when(immune_measure %in% chem_pct ~ lower.CI*1000*10,
                                 immune_measure == "White Blood Cells" ~ lower.CI * 1000*10,
                                 immune_measure == "Red Blood Cells" ~ lower.CI * 1000000*10,
                                 immune_measure == "Mean Corpuscular Volume" ~ lower.CI*10)) %>%
-    mutate(upper_ci = case_when(immune_measure %in% chem_pct ~ upper.CI*10,
+    mutate(upper_ci = case_when(immune_measure %in% chem_pct ~ upper.CI*1000*10,
                                 immune_measure == "White Blood Cells" ~ upper.CI * 1000*10,
                                 immune_measure == "Red Blood Cells" ~ upper.CI * 1000000*10,
                                 immune_measure == "Mean Corpuscular Volume" ~ upper.CI*10)) %>%
-    mutate(units = case_when(immune_measure %in% chem_pct ~ "%",
+    mutate(units = case_when(immune_measure %in% chem_pct ~ "cells per uL",
                              immune_measure == "White Blood Cells" ~ "cells per uL",
                              immune_measure == "Red Blood Cells" ~ "cells per uL",
                              immune_measure == "Mean Corpuscular Volume" ~ "fL"))
-  
+  # print("test 2")
   #############################################################################################################
   ############################################# Make The Table Nice ###########################################
   #############################################################################################################
@@ -508,38 +509,41 @@ run_demog_regression <- function(nhanes_subset,
     relocate(immune_measure, .before = "term") %>%
     relocate(interpret, .after = "term") %>%
     relocate(lower_ci, .after = "interpret") %>%
-    relocate(upper_ci, .after = "lower_ci") %>%
-    mutate(lower_ci = sprintf("%0.2f", lower_ci),
-           upper_ci = sprintf("%0.2f", upper_ci)) %>%
-    mutate(ci = paste0(lower_ci, " - ", upper_ci)) %>%
-    relocate(ci, .after = "interpret") %>%
-    dplyr::select(-lower_ci,
-                  -upper_ci)
+    relocate(upper_ci, .after = "lower_ci") #%>%
+    # mutate(lower_ci = sprintf("%0.2f", lower_ci),
+    #        upper_ci = sprintf("%0.2f", upper_ci)) %>%
+    # mutate(ci = paste0(lower_ci, " - ", upper_ci)) %>%
+    # relocate(ci, .after = "interpret") %>%
+    # dplyr::select(-lower_ci,
+    #               -upper_ci)
+  
   
   
   # Set wd
-  setwd(paste0(current_directory, "/Tables - Table 1"))
+  setwd(paste0(current_directory, "/Regression Results"))
+  
+  write.csv(model_clean, "age regressions.csv")
   
   # Make a gt table for saving as html
-  model_clean %>%
-    dplyr::select(-term) %>%
-    gt() %>%
-    cols_label(interpret = "Beta Interpretation",
-               immune_measure = "Immune Measure",
-               ci = "95% Confidence Interval",
-               units = "Units") %>%
-    fmt_number(columns = c("interpret"),
-               decimals = 2) %>%
-    fmt_scientific(columns = "FDR",
-                   decimals = 1) %>%
-    cols_align(align = "center",
-               columns = c("interpret",
-                           "ci",
-                           "FDR")) %>%
-    cols_align(align = "right",
-               columns = "units") %>%
-    tab_options(column_labels.font.weight = "bold") %>%
-    gtsave("interpreted_age_regressions.html")
+  # model_clean %>%
+  #   dplyr::select(-term) %>%
+  #   gt() %>%
+  #   cols_label(interpret = "Beta Interpretation",
+  #              immune_measure = "Immune Measure",
+  #              ci = "95% Confidence Interval",
+  #              units = "Units") %>%
+  #   fmt_number(columns = c("interpret"),
+  #              decimals = 2) %>%
+  #   fmt_scientific(columns = "FDR",
+  #                  decimals = 1) %>%
+  #   cols_align(align = "center",
+  #              columns = c("interpret",
+  #                          "ci",
+  #                          "FDR")) %>%
+  #   # cols_align(align = "right",
+  #   #            columns = "") %>%
+  #   tab_options(column_labels.font.weight = "bold") %>%
+  #   gtsave("interpreted_age_regressions_new.html")
   
   
   View(model_clean)

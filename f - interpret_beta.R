@@ -24,67 +24,61 @@ interpret_beta <- function(model_stats)
   #############################################################################################################
 
   # Define chemicals that are expressed as percentages or don't change
-  chem_pct <- c("LBXLYPCT",
-                "LBXNEPCT",
-                "LBXMOPCT",
-                "LBXBAPCT",
-                "LBXEOPCT")
+  chem_pct <- c("LBDLYMNO", #lymphocyte counts
+                "LBDMONO",  #monocyte counts
+                "LBDNENO",  #neutrophil counts
+                "LBDEONO",  #eosinophil counts
+                "LBDBANO"   #basophil counts
+                )
   
   # Keep only the chemical betas
   model_stats_chems <- model_stats %>%
     filter(term == "chem_log_measurement") %>%
-    mutate(interpret = case_when(celltype_codename %in% chem_pct ~ estimate,
+    mutate(interpret = case_when(celltype_codename %in% chem_pct ~ estimate * 1000,
                                  celltype_codename == "LBXWBCSI" ~ estimate * 1000,
                                  celltype_codename == "LBXRBCSI" ~ estimate * 1000000,
                                  celltype_codename == "LBXMCVSI" ~ estimate)) %>%
-    mutate(lower_ci = case_when(celltype_codename %in% chem_pct ~ lower.CI,
+    mutate(lower_ci = case_when(celltype_codename %in% chem_pct ~ lower.CI * 1000,
                                 celltype_codename == "LBXWBCSI" ~ lower.CI * 1000,
                                 celltype_codename == "LBXRBCSI" ~ lower.CI * 1000000,
                                 celltype_codename == "LBXMCVSI" ~ lower.CI)) %>%
-    mutate(upper_ci = case_when(celltype_codename %in% chem_pct ~ upper.CI,
+    mutate(upper_ci = case_when(celltype_codename %in% chem_pct ~ upper.CI * 1000,
                                 celltype_codename == "LBXWBCSI" ~ upper.CI * 1000,
                                 celltype_codename == "LBXRBCSI" ~ upper.CI * 1000000,
                                 celltype_codename == "LBXMCVSI" ~ upper.CI)) %>%
-    mutate(units = case_when(celltype_codename %in% chem_pct ~ "%",
+    mutate(std_error = case_when(celltype_codename %in% chem_pct ~ std.error * 1000,
+                                celltype_codename == "LBXWBCSI" ~ std.error * 1000,
+                                celltype_codename == "LBXRBCSI" ~ std.error * 1000000,
+                                celltype_codename == "LBXMCVSI" ~ std.error)) %>%
+    mutate(units = case_when(celltype_codename %in% chem_pct ~ "cells per uL",
                              celltype_codename == "LBXWBCSI" ~ "cells per uL",
                              celltype_codename == "LBXRBCSI" ~ "cells per uL",
                              celltype_codename == "LBXMCVSI" ~ "fL")) %>%
-    # mutate(covariate = case_when(term == "RIDRETH11" ~ "race_mexican_american",
-    #                              term == "RIDRETH12" ~ "race_other_hispanic",
-    #                              term == "RIDRETH14" ~ "race_non_hispanic_black",
-    #                              term == "RIDRETH15" ~ "race_other",
-    #                              term == "RIDAGEYR"  ~ "age",
-    #                              term == "RIAGENDR2" ~ "sex_female",
-    #                              term == "INDFMPIR"  ~ "poverty_income_ratio",
-    #                              term == "BMXWAIST"  ~ "waist_circumference",
-    #                              term == "BMXWAIST"  ~ "waist_circumference",
-    #                              term == "SDDSRVYR2" ~ "cycle_2",
-    #                              term == "SDDSRVYR3" ~ "cycle_3",
-    #                              term == "SDDSRVYR4" ~ "cycle_4",
-    #                              term == "SDDSRVYR5" ~ "cycle_5",
-    #                              term == "SDDSRVYR6" ~ "cycle_6",
-    #                              term == "SDDSRVYR7" ~ "cycle_7",
-    #                              term == "SDDSRVYR8" ~ "cycle_8",
-    #                              term == "SDDSRVYR9" ~ "cycle_9",
-    #                              term == "SDDSRVYR10" ~ "cycle_10",
-    #                              term == "URXUCR"    ~ "creatinine",
-    #                              term == "(Intercept)" ~ "intercept",
-    #                              term == "SMOKING" ~ "cotinine",
-    #                              term == "chem_log_measurement" ~ "chemical")) %>%
-    dplyr::select(-estimate,
-                  -term) %>%
+    mutate(chemical_name_only = gsub("\\s\\(([^()]+)\\)$", "", chemical_name)) %>%
     dplyr::select(immune_measure,
-                  chemical_name,
+                  chemical_name_only,
                   interpret,
-                  std.error,
-                  lower_ci,
-                  upper_ci,
+                  std_error,
+                  lower.CI,
+                  upper.CI,
                   statistic,
                   p.value,
                   FDR,
-                  units,
                   chem_family,
-                  chemical_codename)
+                  chemical_codename,
+                  nobs)  %>%
+    rename('Immune Measure' = immune_measure,
+           'Chemical Name' = chemical_name_only,
+           'Beta Coefficient' = interpret,
+           'Standard Error' = std_error,
+           'Lower 95% Confidence Interval' = lower.CI,
+           'Upper 95% Confidence Interval' = upper.CI,
+           'Statistic' = statistic,
+           'p-value' = p.value,
+           'FDR' = FDR,
+           'Number of Participants' = nobs,
+           'Chemical Family' = chem_family,
+           'Chemical Codename' = chemical_codename)
   
   #############################################################################################################
   ######################################### Save Interpretted Dataset #########################################
@@ -93,7 +87,7 @@ interpret_beta <- function(model_stats)
   setwd(paste0(current_directory, "/Regression Results"))
   
   write.csv(model_stats_chems,
-            file = "model_stats_chems_interpretted.csv",
+            file = "model_stats_chems_interpretted_new.csv",
             row.names = F)
   
   print("Results saved in Regression Results folder")

@@ -12,7 +12,8 @@
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-run_logit_regression <- function(long_nhanes_subset,
+run_logit_regression <- function(nhanes_subset,
+                                 long_nhanes_subset,
                                  conversion,
                                  weights_dataset)
 {
@@ -39,6 +40,8 @@ run_logit_regression <- function(long_nhanes_subset,
   #############################################################################################################
   ############################################# Clean Long Dataset ############################################
   #############################################################################################################
+  
+  nhanes_seqn <- nhanes_subset %>% pull(SEQN)
   
   long_nhanes_clean <- long_nhanes_subset %>%
     filter(chemical_codename == "LBXCOT" |
@@ -72,12 +75,17 @@ run_logit_regression <- function(long_nhanes_subset,
   ############################################ Merge in the Weights ###########################################
   #############################################################################################################
   
-  # Select the columns of weights for cotinine and cadmium
+  # Select the columns of weights for cotinine, cadmium, and copper
   chem_weights <- weights_dataset %>%
     dplyr::select(SEQN,
+                  SDDSRVYR,
                   WT_LBXCOT,
                   WT_LBXBCD,
-                  WT_LBXSCU)
+                  WT_LBXSCU) %>%
+    filter(!SDDSRVYR == -1) %>%
+    filter(SEQN %in% nhanes_seqn) %>%
+    select(-SDDSRVYR)
+  
   
   # Merge weights into covariates dataset
   nhanes_weights <- left_join(long_nhanes_clean, chem_weights, by = "SEQN")
@@ -119,15 +127,18 @@ run_logit_regression <- function(long_nhanes_subset,
   
   #cotinine
   cot_dataset <- nhanes_weights_adj %>%
-    filter(chemical_codename == "LBXCOT")
+    filter(chemical_codename == "LBXCOT") %>%
+    drop_na(WT_LBXCOT_adj)
   
   #cadmium
   cad_dataset <- nhanes_weights_adj %>%
-    filter(chemical_codename == "LBXBCD")
+    filter(chemical_codename == "LBXBCD") %>%
+    drop_na(WT_LBXBCD_adj)
   
   #copper
   cu_dataset <- nhanes_weights_adj %>%
-    filter(chemical_codename == "LBXSCU")
+    filter(chemical_codename == "LBXSCU") %>%
+    drop_na(WT_LBXSCU_adj)
   
   str(cad_dataset)
   
@@ -158,6 +169,24 @@ run_logit_regression <- function(long_nhanes_subset,
   #############################################################################################################
   ############################################## Run Regressions ##############################################
   #############################################################################################################
+  
+  # Unweighted
+  # nhanes_subset <- nhanes_subset_dataset %>%
+  #   mutate(wbc_categ = case_when(LBXWBCSI < 4.5 ~ "Low",
+  #                                LBXWBCSI >= 4.5 & LBXWBCSI <= 11 ~ "Normal",
+  #                                LBXWBCSI > 11 ~ "High")) %>%
+  #   filter(!wbc_categ == "Low") %>%
+  #   mutate(wbc_categ = as.factor(wbc_categ))
+  # glm(formula = wbc_categ ~
+  #       log2(LBXCOT)+
+  #       RIDAGEYR+
+  #       INDFMPIR+
+  #       BMXWAIST+
+  #       RIAGENDR+
+  #       RIDRETH1+
+  #       SDDSRVYR,
+  #     data = nhanes_subset,
+  #     family = "binomial") %>% tidy()
   
   model_cot <- svyglm(wbc_categ ~
                         chem_log_measurement+
@@ -221,67 +250,10 @@ run_logit_regression <- function(long_nhanes_subset,
     dplyr::select(chemical,
                   estimate,
                   std.error,
-                  p.value)
+                  p.value) %>%
+    mutate(odds_ratio = exp(estimate))
   print(fdr_chems)
   
-  #############################################################################################################
-  ############################################### Create Tables ###############################################
-  #############################################################################################################
+  print("the warning messages are fine")
   
-  # cotinine <- model_cot %>%
-  #   tbl_regression(exponentiate = TRUE,
-  #                  label = c(chem_log_measurement ~ "log2(chemical)",
-  #                            RIDAGEYR ~ "Age (years)",
-  #                            INDFMPIR ~ "Poverty-Income Ratio",
-  #                            BMXWAIST ~ "Waist Circumference (cm)",
-  #                            RIAGENDR ~ "Sex",
-  #                            RIDRETH1 ~ "Race/Ethnicity",
-  #                            SDDSRVYR ~ "Survey Cycle")) %>%
-  #   bold_labels() %>%
-  #   modify_header(label ~ "**Variable**") %>%
-  #   bold_p(t = 0.05)
-  # 
-  # cadmium <- model_cad %>%
-  #   tbl_regression(exponentiate = TRUE,
-  #                  label = c(chem_log_measurement ~ "log2(chemical)",
-  #                            RIDAGEYR ~ "Age (years)",
-  #                            INDFMPIR ~ "Poverty-Income Ratio",
-  #                            BMXWAIST ~ "Waist Circumference (cm)",
-  #                            SMOKING  ~ "Cotinine (ng/mL)",
-  #                            RIAGENDR ~ "Sex",
-  #                            RIDRETH1 ~ "Race/Ethnicity",
-  #                            SDDSRVYR ~ "Survey Cycle")) %>%
-  #   bold_labels() %>%
-  #   modify_header(label ~ "**Variable**") %>%
-  #   bold_p(t = 0.05)
-  # 
-  # copper <- model_cu %>%
-  #   tbl_regression(exponentiate = TRUE,
-  #                  label = c(chem_log_measurement ~ "log2(chemical)",
-  #                            RIDAGEYR ~ "Age (years)",
-  #                            INDFMPIR ~ "Poverty-Income Ratio",
-  #                            BMXWAIST ~ "Waist Circumference (cm)",
-  #                            SMOKING  ~ "Cotinine (ng/mL)",
-  #                            RIAGENDR ~ "Sex",
-  #                            RIDRETH1 ~ "Race/Ethnicity",
-  #                            SDDSRVYR ~ "Survey Cycle")) %>%
-  #   bold_labels() %>%
-  #   modify_header(label ~ "**Variable**") %>%
-  #   bold_p(t = 0.05)
-  
-  #############################################################################################################
-  ################################################ Save Results ###############################################
-  #############################################################################################################
-  
-  # Set directory
-  # setwd(paste0(current_directory, "/Regression Results"))
-  # 
-  # # Combine the cotinine and cadmium results into one table
-  # tbl_merge(tbls = list(cadmium, cotinine, copper),
-  #           tab_spanner = c("**Blood Cadmium**", "**Cotinine**", "**Copper**")) %>%
-  #   as_gt() %>%
-  #   gtsave(filename = "table_logistic_reg.html")
-  # 
-  # # Reset directory
-  # setwd(current_directory)
 }
