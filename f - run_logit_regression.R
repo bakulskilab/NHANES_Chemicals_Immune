@@ -2,7 +2,7 @@
 ########################################  Adjusted Logistic Regression  #######################################
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-# Purpose: This function runs the adjusted logistic regressions for WBCs, cotinine and blood cadmium
+# Purpose: This function runs the adjusted logistic regressions for WBCs and top 3 chems
 #          
 # Inputs: long_nhanes_subset - long dataframe containing complete demographic and immune data for each
 #                              participant
@@ -27,6 +27,7 @@ run_logit_regression <- function(nhanes_subset,
   # long_nhanes_subset <- long_nhanes_subset_dataset
   # conversion <- use_these_chems
   # weights_dataset <- survey_weights
+  # nhanes_subset <- nhanes_subset_dataset
   
   #Outline
   # Make and clean a long dataset of covariates, survey variables + cotinine/cadmium/copper + WT_LBXCOT/WT_LBXBCD/WT_LBXSCU
@@ -45,8 +46,8 @@ run_logit_regression <- function(nhanes_subset,
   
   long_nhanes_clean <- long_nhanes_subset %>%
     filter(chemical_codename == "LBXCOT" |
-             chemical_codename == "LBXBCD" |
-             chemical_codename == "LBXSCU") %>%
+             chemical_codename == "URXP04" |
+             chemical_codename == "URXCEM") %>%
     filter(celltype_codename == "LBXWBCSI") %>%
     mutate(wbc_categ = case_when(cell_measurement < 4.5 ~ "Low",
                                  cell_measurement >= 4.5 & cell_measurement <= 11 ~ "Normal",
@@ -80,8 +81,8 @@ run_logit_regression <- function(nhanes_subset,
     dplyr::select(SEQN,
                   SDDSRVYR,
                   WT_LBXCOT,
-                  WT_LBXBCD,
-                  WT_LBXSCU) %>%
+                  WT_URXP04,
+                  WT_URXCEM) %>%
     filter(!SDDSRVYR == -1) %>%
     filter(SEQN %in% nhanes_seqn) %>%
     select(-SDDSRVYR)
@@ -100,11 +101,11 @@ run_logit_regression <- function(nhanes_subset,
   nhanes_weights_1_2 <- nhanes_weights %>%
     filter(SDDSRVYR %in% cycles1_2) %>%
     mutate(WT_LBXCOT_adj = WT_LBXCOT*(2/10)) %>%
-    mutate(WT_LBXBCD_adj = WT_LBXBCD*(2/10)) %>%
-    mutate(WT_LBXSCU_adj = WT_LBXSCU) %>% #this is just a place holder column 
+    mutate(WT_URXP04_adj = WT_URXP04) %>%
+    mutate(WT_URXCEM_adj = WT_URXCEM) %>% #this is just a place holder column 
     dplyr::select(-WT_LBXCOT,
-                  -WT_LBXBCD,
-                  -WT_LBXSCU)
+                  -WT_URXP04,
+                  -WT_URXCEM)
   
   # and cycles 3-10
   # Multiply weights from cycles 3-10 by (1/10)
@@ -112,11 +113,11 @@ run_logit_regression <- function(nhanes_subset,
   nhanes_weights_3_10 <- nhanes_weights %>%
     filter(SDDSRVYR %in% cycles3_10) %>%
     mutate(WT_LBXCOT_adj = WT_LBXCOT*(1/10)) %>%
-    mutate(WT_LBXBCD_adj = WT_LBXBCD*(1/10)) %>%
-    mutate(WT_LBXSCU_adj = WT_LBXSCU*(1/3)) %>% #there are only 3 cycles of copper
+    mutate(WT_URXP04_adj = WT_URXP04*(1/8)) %>%
+    mutate(WT_URXCEM_adj = WT_URXCEM*(1/4)) %>% #there are only 4 cycles of data
     dplyr::select(-WT_LBXCOT,
-                  -WT_LBXBCD,
-                  -WT_LBXSCU)
+                  -WT_URXP04,
+                  -WT_URXCEM)
   
   # Put the datasets back together
   nhanes_weights_adj <- bind_rows(nhanes_weights_1_2, nhanes_weights_3_10)
@@ -130,15 +131,15 @@ run_logit_regression <- function(nhanes_subset,
     filter(chemical_codename == "LBXCOT") %>%
     drop_na(WT_LBXCOT_adj)
   
-  #cadmium
+  #2-fluorene
   cad_dataset <- nhanes_weights_adj %>%
-    filter(chemical_codename == "LBXBCD") %>%
-    drop_na(WT_LBXBCD_adj)
+    filter(chemical_codename == "URXP04") %>%
+    drop_na(WT_URXP04_adj)
   
-  #copper
+  #long name
   cu_dataset <- nhanes_weights_adj %>%
-    filter(chemical_codename == "LBXSCU") %>%
-    drop_na(WT_LBXSCU_adj)
+    filter(chemical_codename == "URXCEM") %>%
+    drop_na(WT_URXCEM_adj)
   
   str(cad_dataset)
   
@@ -155,13 +156,13 @@ run_logit_regression <- function(nhanes_subset,
   
   svy_cad <- svydesign(strata = ~SDMVSTRA
                        , id = ~SDMVPSU
-                       , weights = ~WT_LBXBCD_adj
+                       , weights = ~WT_URXP04_adj
                        , data = cad_dataset
                        , nest = TRUE)
   
   svy_cu <- svydesign(strata = ~SDMVSTRA
                        , id = ~SDMVPSU
-                       , weights = ~WT_LBXSCU_adj
+                       , weights = ~WT_URXCEM_adj
                        , data = cu_dataset
                        , nest = TRUE)
   
@@ -209,6 +210,7 @@ run_logit_regression <- function(nhanes_subset,
                         SMOKING+
                         RIAGENDR+
                         RIDRETH1+
+                        URXUCR+
                         SDDSRVYR,
                       na.action = na.omit,
                       design = svy_cad,
@@ -223,6 +225,7 @@ run_logit_regression <- function(nhanes_subset,
                         SMOKING+
                         RIAGENDR+
                         RIDRETH1+
+                       URXUCR+
                         SDDSRVYR,
                       na.action = na.omit,
                       design = svy_cu,
@@ -233,19 +236,19 @@ run_logit_regression <- function(nhanes_subset,
   ############################################# Calculate p-values ############################################
   #############################################################################################################
   
-  cad_fdr <- tidy(model_cad) %>%
-    filter(term == "chem_log_measurement")
-  rownames(cad_fdr) <- "cadmium"
-  
   cot_fdr <- tidy(model_cot) %>%
     filter(term == "chem_log_measurement")
   rownames(cot_fdr) <- "cotinine"
   
+  cad_fdr <- tidy(model_cad) %>%
+    filter(term == "chem_log_measurement")
+  rownames(cad_fdr) <- "2-fluorene"
+  
   cu_fdr <- tidy(model_cu) %>%
     filter(term == "chem_log_measurement")
-  rownames(cu_fdr) <- "copper"
+  rownames(cu_fdr) <- "N-acetyl-S-(2-Carboxyethyl)-L-cysteine"
   
-  fdr_chems <- bind_rows(cad_fdr, cot_fdr, cu_fdr) %>%
+  fdr_chems <- bind_rows(cot_fdr, cad_fdr, cu_fdr) %>%
     rownames_to_column(var = "chemical") %>%
     dplyr::select(chemical,
                   estimate,
@@ -253,6 +256,10 @@ run_logit_regression <- function(nhanes_subset,
                   p.value) %>%
     mutate(odds_ratio = exp(estimate))
   print(fdr_chems)
+  
+  # exp(confint(model_cot))
+  # exp(confint(model_cad))
+  # exp(confint(model_cu))
   
   print("the warning messages are fine")
   
