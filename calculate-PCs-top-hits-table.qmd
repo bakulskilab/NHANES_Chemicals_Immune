@@ -1,0 +1,589 @@
+---
+title: "Immune markers EWAS PCA & top hits table"
+format: html
+author: Kelly
+date: `r Sys.Date()`
+---
+
+# Responding to reviewer critique
+
+```{r}
+# load packages
+library(tidyverse)
+library(readxl)
+library(writexl)
+library(gt)
+```
+
+
+```{r}
+# Read in the data
+load("~/Google Drive/My Drive/NHANES/Immune Measures Manuscript/Manuscript Code/w - mini_updated_environment.RData")
+```
+
+
+```{r}
+# Subset to the white blood cell types
+cells <- nhanes_subset_preg_dataset %>%
+  select(LBXLYPCT, 
+         LBXMOPCT, 
+         LBXNEPCT, 
+         LBXEOPCT,
+         LBXBAPCT)
+
+# Calculate principal components
+cells_prin <- prcomp(cells, center = T, scale = F)
+head(cells_prin)
+# Calculate the percent variance explained by each PC
+out_var <- cells_prin$sdev^2 / sum(cells_prin$sdev^2)
+pcvar <- data.frame(pcs = seq(1, length(out_var)), var = out_var)
+```
+
+
+```{r}
+# Make a skree plot
+ggplot(pcvar, aes(x = pcs, y = var)) +
+  geom_bar(stat = "identity", color = "black") +
+  theme_bw() +
+  labs(x = "Principal Component Number", y = "Variance Explained")
+
+pcvar
+#pc1 explains 91% of the variance. 
+
+# Which cell types are most associated with PC1?
+cor.test(nhanes_subset_preg_dataset$LBXLYPCT, cells_prin_dat$PC1)
+cor.test(nhanes_subset_preg_dataset$LBXMOPCT, cells_prin_dat$PC1)
+cor.test(nhanes_subset_preg_dataset$LBXNEPCT, cells_prin_dat$PC1)
+cor.test(nhanes_subset_preg_dataset$LBXEOPCT, cells_prin_dat$PC1)
+cor.test(nhanes_subset_preg_dataset$LBXBAPCT, cells_prin_dat$PC1)
+
+```
+```{r}
+
+# Scatterplot of PC1 and PC2 
+
+cells_prin_dat <- data.frame(cells_prin$x)[, 1:5]
+head(cells_prin_dat)
+
+ggplot(cells_prin_dat, aes(x = PC1, y = PC2)) +
+  geom_point() +
+  labs(x = "Principal component 1 (91.3% of variance)",
+       y = "Principal component 2 (5.9% of variance)",
+       title = "White blood cell percentage") +
+  theme_bw()
+
+
+```
+
+
+```{r}
+#| eval: false
+
+# Alternative plot option, decided against this
+install.packages("GGally")
+library(GGally)
+#Here we can define another function to use to look at principle component plots by different attributes.
+pc_plot <- ggpairs(data.frame(cells_prin$x)[, 1:5], aes(color = factor(nhanes_subset_preg_dataset$RIAGENDR)))
+
+pcplot <- function(pheno){
+  ggpairs(data.frame(cells_prin$x)[, 1:6], aes(color = factor(unlist(pd[pheno]))))
+}
+```
+
+# Read in main findings
+```{r}
+
+
+all_results <- read_excel("~/Google Drive/My Drive/NHANES/Immune Measures Manuscript/Environmental Research Submission/Supplemental Tables/Supplemental Table 7 - linear regressions chems.xlsx")
+head(all_results)
+```
+
+# Make a top hits table
+```{r}
+dim(all_results)
+fdr <- all_results %>% 
+  filter(FDR<0.05)
+dim(fdr)
+head(fdr)
+
+table(fdr$`Immune Measure`)
+
+?pivot_wider
+colnames(fdr)
+fdr_wide <- pivot_wider(fdr, 
+                        id_cols = "Chemical Name",
+                        names_from = "Immune Measure",
+                        values_from = c("Beta Coefficient Interpretation", "Lower 95% Confidence Interval", "Upper 95% Confidence Interval", "FDR"),
+                        names_sort = FALSE)
+
+dim(fdr_wide)
+head(fdr_wide)
+colnames(fdr_wide)
+
+
+
+# fdr_wide %>%
+#   relocate("Chemical Name",
+#            "Beta Coefficient Interpretation_WBC (1000 cells/uL)",
+#            "Lower 95% Confidence Interval_WBC (1000 cells/uL)",
+#            "Upper 95% Confidence Interval_WBC (1000 cells/uL)",
+#            "FDR_WBC (1000 cells/uL)",
+#            "Beta Coefficient Interpretation_WBC (1000 cells/uL)",
+#            "Lower 95% Confidence Interval_WBC (1000 cells/uL)",
+#            "Upper 95% Confidence Interval_WBC (1000 cells/uL)",
+#            "FDR_WBC (1000 cells/uL)",
+#           )
+
+
+fdr_wide <- fdr_wide %>%
+  relocate("Chemical Name",
+           ends_with("WBC (1000 cells/uL)"), 
+           ends_with("Lymphocytes (%)"),
+           ends_with("Neutrophils (%)"),
+           ends_with("Monocytes (%)"),
+            ends_with("Basophils (%)"), 
+             ends_with("Eosinophils (%)"),
+            ends_with("RBC (million cells/uL)"),
+            ends_with("Mean Corpuscular Volume (fL)")
+          )
+
+#fdr_wide <- 
+  
+  
+str(fdr_wide$`FDR_WBC (1000 cells/uL)`)
+sort(fdr_wide$`FDR_WBC (1000 cells/uL)`)
+
+
+  
+fdr_wide <- fdr_wide %>%
+    ungroup() %>%
+    arrange(`FDR_WBC (1000 cells/uL)`,
+            `FDR_Lymphocytes (%)`,
+            `FDR_Neutrophils (%)`,
+            `FDR_Monocytes (%)`,
+            `FDR_Basophils (%)`,
+            `FDR_Eosinophils (%)`,
+            `FDR_RBC (million cells/uL)`,
+            `FDR_Mean Corpuscular Volume (fL)`) 
+head(fdr_wide)
+
+
+
+write_xlsx(fdr_wide, path = "~/Google Drive/My Drive/NHANES/Immune Measures Manuscript/Environmental Research Submission/Supplemental Tables/Table 3 - significant linear regressions chems.xlsx")
+```
+
+
+```{r}
+# Make as a gt table for formatting 
+
+
+fdr_format <- fdr_wide %>%
+  gt() %>%  
+  fmt_number(n_sigfig = 3) %>%
+  fmt_scientific(
+    columns = `FDR_WBC (1000 cells/uL)`,
+    rows = `FDR_WBC (1000 cells/uL)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+    fmt_scientific(
+    columns = `FDR_Lymphocytes (%)`,
+    rows = `FDR_Lymphocytes (%)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+    fmt_scientific(
+    columns = `FDR_Neutrophils (%)`,
+    rows = `FDR_Neutrophils (%)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+    fmt_scientific(
+    columns = `FDR_Monocytes (%)`,
+    rows = `FDR_Monocytes (%)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+    fmt_scientific(
+    columns = `FDR_Basophils (%)`,
+    rows = `FDR_Basophils (%)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+    fmt_scientific(
+    columns = `FDR_Eosinophils (%)`,
+    rows = `FDR_Eosinophils (%)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+    fmt_scientific(
+    columns = `FDR_RBC (million cells/uL)`,
+    rows = `FDR_RBC (million cells/uL)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+  fmt_scientific(
+    columns = `FDR_Mean Corpuscular Volume (fL)`,
+    rows = `FDR_Mean Corpuscular Volume (fL)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+  cols_merge(
+    columns = c("Lower 95% Confidence Interval_WBC (1000 cells/uL)",
+                "Upper 95% Confidence Interval_WBC (1000 cells/uL)" ),
+    pattern = "{1},{2}") %>%
+    cols_merge(
+    columns = c("Lower 95% Confidence Interval_Lymphocytes (%)",
+                "Upper 95% Confidence Interval_Lymphocytes (%)" ),
+    pattern = "{1},{2}") %>%
+      cols_merge(
+    columns = c("Lower 95% Confidence Interval_Neutrophils (%)",
+                "Upper 95% Confidence Interval_Neutrophils (%)" ),
+    pattern = "{1},{2}") %>%
+      cols_merge(
+    columns = c("Lower 95% Confidence Interval_Monocytes (%)",
+                "Upper 95% Confidence Interval_Monocytes (%)" ),
+    pattern = "{1},{2}") %>%
+      cols_merge(
+    columns = c("Lower 95% Confidence Interval_Basophils (%)",
+                "Upper 95% Confidence Interval_Basophils (%)" ),
+    pattern = "{1},{2}") %>%
+      cols_merge(
+    columns = c("Lower 95% Confidence Interval_Eosinophils (%)",
+                "Upper 95% Confidence Interval_Eosinophils (%)" ),
+    pattern = "{1},{2}") %>%
+      cols_merge(
+    columns = c("Lower 95% Confidence Interval_RBC (million cells/uL)",
+                "Upper 95% Confidence Interval_RBC (million cells/uL)" ),
+    pattern = "{1},{2}") %>%
+      cols_merge(
+    columns = c("Lower 95% Confidence Interval_Mean Corpuscular Volume (fL)",
+                "Upper 95% Confidence Interval_Mean Corpuscular Volume (fL)" ),
+    pattern = "{1},{2}") %>%
+  tab_spanner(
+    label = "White Blood Cells (1000 cells/uL)",
+    columns = c("Beta Coefficient Interpretation_WBC (1000 cells/uL)",
+                "Lower 95% Confidence Interval_WBC (1000 cells/uL)",
+                "FDR_WBC (1000 cells/uL)")) %>%
+    tab_spanner(
+    label = "Lymphocytes (%)",
+    columns = c("Beta Coefficient Interpretation_Lymphocytes (%)",
+                "Lower 95% Confidence Interval_Lymphocytes (%)",
+                "FDR_Lymphocytes (%)")) %>%  
+        tab_spanner(
+    label = "Neutrophils (%)",
+    columns = c("Beta Coefficient Interpretation_Neutrophils (%)",
+                "Lower 95% Confidence Interval_Neutrophils (%)",
+                "FDR_Neutrophils (%)")) %>%
+    tab_spanner(
+    label = "Monocytes (%)",
+    columns = c("Beta Coefficient Interpretation_Monocytes (%)",
+                "Lower 95% Confidence Interval_Monocytes (%)",
+                "FDR_Monocytes (%)")) %>% 
+        tab_spanner(
+    label = "Basophils (%)",
+    columns = c("Beta Coefficient Interpretation_Basophils (%)",
+                "Lower 95% Confidence Interval_Basophils (%)",
+                "FDR_Basophils (%)")) %>%
+    tab_spanner(
+    label = "Eosinophils (%)",
+    columns = c("Beta Coefficient Interpretation_Eosinophils (%)",
+                "Lower 95% Confidence Interval_Eosinophils (%)",
+                "FDR_Eosinophils (%)")) %>% 
+        tab_spanner(
+    label = "RBC (million cells/uL)",
+    columns = c("Beta Coefficient Interpretation_RBC (million cells/uL)",
+                "Lower 95% Confidence Interval_RBC (million cells/uL)",
+                "FDR_RBC (million cells/uL)")) %>%
+    tab_spanner(
+    label = "Mean Corpuscular Volume (fL)",
+    columns = c("Beta Coefficient Interpretation_Mean Corpuscular Volume (fL)",
+                "Lower 95% Confidence Interval_Mean Corpuscular Volume (fL)",
+                "FDR_Mean Corpuscular Volume (fL)")) %>%
+  cols_label(
+    "Beta Coefficient Interpretation_WBC (1000 cells/uL)" = "Beta",
+    "Lower 95% Confidence Interval_WBC (1000 cells/uL)" = "CI",
+    "FDR_WBC (1000 cells/uL)" = "FDR",
+    "Beta Coefficient Interpretation_Lymphocytes (%)" = "Beta",
+    "Lower 95% Confidence Interval_Lymphocytes (%)" = "CI",
+    "FDR_Lymphocytes (%)" = "FDR",
+    "Beta Coefficient Interpretation_Neutrophils (%)"  = "Beta", 
+    "Lower 95% Confidence Interval_Neutrophils (%)" ="CI",
+    "FDR_Neutrophils (%)" ="FDR",
+    "Beta Coefficient Interpretation_Monocytes (%)" = "Beta",
+    "Lower 95% Confidence Interval_Monocytes (%)"  ="CI",
+    "FDR_Monocytes (%)" = "FDR",
+    "Beta Coefficient Interpretation_Basophils (%)" = "Beta",
+    "Lower 95% Confidence Interval_Basophils (%)" = "CI",
+    "FDR_Basophils (%)"  = "FDR",
+    "Beta Coefficient Interpretation_Eosinophils (%)" = "Beta",
+    "Lower 95% Confidence Interval_Eosinophils (%)" = "CI",
+    "FDR_Eosinophils (%)"  = "FDR",
+    "Beta Coefficient Interpretation_RBC (million cells/uL)" = "Beta",
+    "Lower 95% Confidence Interval_RBC (million cells/uL)" = "CI",
+    "FDR_RBC (million cells/uL)"  = "FDR", 
+    "Beta Coefficient Interpretation_Mean Corpuscular Volume (fL)" = "Beta",
+    "Lower 95% Confidence Interval_Mean Corpuscular Volume (fL)" = "CI",
+     "FDR_Mean Corpuscular Volume (fL)" = "FDR"
+  ) %>%
+  sub_missing(
+    missing_text = ""
+  ) %>%
+    tab_style_body(
+    fn = function(x) is.na(x),
+    style = cell_fill(color = "grey90")
+  )  
+
+
+
+fdr_format
+```
+
+
+```{r}
+# Drop a column for space
+fdr_format <- fdr_wide %>%
+  gt() %>%  
+  fmt_number(n_sigfig = 3) %>%
+  fmt_scientific(
+    columns = `FDR_WBC (1000 cells/uL)`,
+    rows = `FDR_WBC (1000 cells/uL)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+    fmt_scientific(
+    columns = `FDR_Lymphocytes (%)`,
+    rows = `FDR_Lymphocytes (%)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+    fmt_scientific(
+    columns = `FDR_Neutrophils (%)`,
+    rows = `FDR_Neutrophils (%)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+    fmt_scientific(
+    columns = `FDR_Monocytes (%)`,
+    rows = `FDR_Monocytes (%)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+    fmt_scientific(
+    columns = `FDR_Basophils (%)`,
+    rows = `FDR_Basophils (%)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+    fmt_scientific(
+    columns = `FDR_Eosinophils (%)`,
+    rows = `FDR_Eosinophils (%)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+    fmt_scientific(
+    columns = `FDR_RBC (million cells/uL)`,
+    rows = `FDR_RBC (million cells/uL)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+  fmt_scientific(
+    columns = `FDR_Mean Corpuscular Volume (fL)`,
+    rows = `FDR_Mean Corpuscular Volume (fL)` <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+  cols_merge(
+    columns = c("Beta Coefficient Interpretation_WBC (1000 cells/uL)",
+                "Lower 95% Confidence Interval_WBC (1000 cells/uL)",
+                "Upper 95% Confidence Interval_WBC (1000 cells/uL)" ),
+    pattern = "{1} ({2}, {3})") %>%
+    cols_merge(
+    columns = c("Beta Coefficient Interpretation_Lymphocytes (%)",
+                "Lower 95% Confidence Interval_Lymphocytes (%)",
+                "Upper 95% Confidence Interval_Lymphocytes (%)" ),
+    pattern = "{1} ({2}, {3})") %>%
+      cols_merge(
+    columns = c("Beta Coefficient Interpretation_Neutrophils (%)",
+                "Lower 95% Confidence Interval_Neutrophils (%)",
+                "Upper 95% Confidence Interval_Neutrophils (%)" ),
+    pattern = "{1} ({2}, {3})") %>%
+      cols_merge(
+    columns = c("Beta Coefficient Interpretation_Monocytes (%)",
+                "Lower 95% Confidence Interval_Monocytes (%)",
+                "Upper 95% Confidence Interval_Monocytes (%)" ),
+    pattern = "{1} ({2}, {3})") %>%
+      cols_merge(
+    columns = c("Beta Coefficient Interpretation_Basophils (%)",
+                "Lower 95% Confidence Interval_Basophils (%)",
+                "Upper 95% Confidence Interval_Basophils (%)" ),
+    pattern = "{1} ({2}, {3})") %>%
+      cols_merge(
+    columns = c("Beta Coefficient Interpretation_Eosinophils (%)",
+                "Lower 95% Confidence Interval_Eosinophils (%)",
+                "Upper 95% Confidence Interval_Eosinophils (%)" ),
+    pattern = "{1} ({2}, {3})") %>%
+      cols_merge(
+    columns = c("Beta Coefficient Interpretation_RBC (million cells/uL)",
+                "Lower 95% Confidence Interval_RBC (million cells/uL)",
+                "Upper 95% Confidence Interval_RBC (million cells/uL)" ),
+    pattern = "{1} ({2}, {3})") %>%
+      cols_merge(
+    columns = c("Beta Coefficient Interpretation_Mean Corpuscular Volume (fL)",
+                "Lower 95% Confidence Interval_Mean Corpuscular Volume (fL)",
+                "Upper 95% Confidence Interval_Mean Corpuscular Volume (fL)" ),
+    pattern = "{1} ({2}, {3})") %>%
+  tab_spanner(
+    label = "White Blood Cells (1000 cells/uL)",
+    columns = c("Beta Coefficient Interpretation_WBC (1000 cells/uL)",
+                "FDR_WBC (1000 cells/uL)")) %>%
+    tab_spanner(
+    label = "Lymphocytes (%)",
+    columns = c("Beta Coefficient Interpretation_Lymphocytes (%)",
+                "FDR_Lymphocytes (%)")) %>%  
+        tab_spanner(
+    label = "Neutrophils (%)",
+    columns = c("Beta Coefficient Interpretation_Neutrophils (%)",
+                "FDR_Neutrophils (%)")) %>%
+    tab_spanner(
+    label = "Monocytes (%)",
+    columns = c("Beta Coefficient Interpretation_Monocytes (%)",
+                "FDR_Monocytes (%)")) %>% 
+        tab_spanner(
+    label = "Basophils (%)",
+    columns = c("Beta Coefficient Interpretation_Basophils (%)",
+                "FDR_Basophils (%)")) %>%
+    tab_spanner(
+    label = "Eosinophils (%)",
+    columns = c("Beta Coefficient Interpretation_Eosinophils (%)",
+                "FDR_Eosinophils (%)")) %>% 
+        tab_spanner(
+    label = "RBC (million cells/uL)",
+    columns = c("Beta Coefficient Interpretation_RBC (million cells/uL)",
+                "FDR_RBC (million cells/uL)")) %>%
+    tab_spanner(
+    label = "Mean Corpuscular Volume (fL)",
+    columns = c("Beta Coefficient Interpretation_Mean Corpuscular Volume (fL)",
+                "FDR_Mean Corpuscular Volume (fL)")) %>%
+  cols_label(
+    "Beta Coefficient Interpretation_WBC (1000 cells/uL)" = "Beta (CI)",
+    "FDR_WBC (1000 cells/uL)" = "FDR",
+    "Beta Coefficient Interpretation_Lymphocytes (%)" = "Beta (CI)",
+    "FDR_Lymphocytes (%)" = "FDR",
+    "Beta Coefficient Interpretation_Neutrophils (%)"  = "Beta (CI)", 
+    "FDR_Neutrophils (%)" ="FDR",
+    "Beta Coefficient Interpretation_Monocytes (%)" = "Beta (CI)",
+    "FDR_Monocytes (%)" = "FDR",
+    "Beta Coefficient Interpretation_Basophils (%)" = "Beta (CI)",
+    "FDR_Basophils (%)"  = "FDR",
+    "Beta Coefficient Interpretation_Eosinophils (%)" = "Beta (CI)",
+    "FDR_Eosinophils (%)"  = "FDR",
+    "Beta Coefficient Interpretation_RBC (million cells/uL)" = "Beta (CI)",
+    "FDR_RBC (million cells/uL)"  = "FDR", 
+    "Beta Coefficient Interpretation_Mean Corpuscular Volume (fL)" = "Beta (CI)",
+     "FDR_Mean Corpuscular Volume (fL)" = "FDR"
+  ) %>%
+  sub_missing(
+    missing_text = ""
+  ) %>%
+    tab_style_body(
+    fn = function(x) is.na(x),
+    style = cell_fill(color = "grey90")
+  )  
+
+fdr_word <- fdr_format %>% as_word()
+```
+
+
+```{r}
+# Export as word document
+gtsave(fdr_format, filename = "Table 3 - significant linear regressions chems.docx", path = "~/Google Drive/My Drive/NHANES/Immune Measures Manuscript/Environmental Research Submission/Figures, Main Tables, PDFs/")
+#gtsave(fdr_format, filename = "Table 3 - significant linear regressions chems.docx", path = "~/Google Drive/My Drive/NHANES/Immune Measures Manuscript/Environmental Research Submission/Supplemental Tables/")
+                                
+```
+
+```{r}
+# Figure out why the three WBC hits were discussed in the text (cadmium, cotinine, copper) and run on a dichotomous outcome
+
+wbc_top <- fdr %>%
+  filter(`Immune Measure` == "WBC (1000 cells/uL)")
+
+dim(wbc_top)
+head(wbc_top)
+
+wbc_top %>%
+  arrange(FDR) %>%
+  head()
+# Cotinine, 2-fluorene, ...cysteine
+# Note, doesn't match the 3 chemicals in the text
+
+wbc_top %>%
+  arrange(abs(`Beta Coefficient Interpretation`)) %>%
+  head()
+# Also doesn't match, is zinc, dioxin, PCB
+
+
+wbc_top %>%
+  arrange(`Beta Coefficient Interpretation`) %>%
+  head()
+# Also doesn't match, is arsenobetaine, benzophenone-3, triclosan
+
+fdr_wide$temp <- rowSums(!is.na(fdr_wide))
+fdr_wide %>%
+  arrange(desc(temp)) %>%
+  head()
+# Also does not match the chemicals with the most number of associations
+```
+
+```{r}
+# Testing
+
+fdr_wide %>%
+  gt() %>%
+  fmt_number(n_sigfig = 3) %>%
+  fmt_scientific(
+    columns = starts_with("FDR_"),
+    rows = starts_with("FDR_") <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+   fmt_scientific(
+    columns = "FDR_WBC (1000 cells/uL)",
+    rows = "FDR_WBC (1000 cells/uL)" <= 0.01,
+    exp_style = "x10n"
+  ) %>%
+  cols_merge(
+    columns = c("Lower 95% Confidence Interval_WBC (1000 cells/uL)",
+                "Upper 95% Confidence Interval_WBC (1000 cells/uL)" ),
+    pattern = "{1},{2}") %>%
+    cols_merge(
+    columns = c("Lower 95% Confidence Interval_Lymphocytes (%)",
+                "Upper 95% Confidence Interval_Lymphocytes (%)" ),
+    pattern = "{1},{2}") %>%
+      cols_merge(
+    columns = c("Lower 95% Confidence Interval_Neutrophils (%)",
+                "Upper 95% Confidence Interval_Neutrophils (%)" ),
+    pattern = "{1},{2}") %>%
+      cols_merge(
+    columns = c("Lower 95% Confidence Interval_Monocytes (%)",
+                "Upper 95% Confidence Interval_Monocytes (%)" ),
+    pattern = "{1},{2}") %>%
+      cols_merge(
+    columns = c("Lower 95% Confidence Interval_Basophils (%)",
+                "Upper 95% Confidence Interval_Basophils (%)" ),
+    pattern = "{1},{2}") %>%
+      cols_merge(
+    columns = c("Lower 95% Confidence Interval_Eosinophils (%)",
+                "Upper 95% Confidence Interval_Eosinophils (%)" ),
+    pattern = "{1},{2}") %>%
+      cols_merge(
+    columns = c("Lower 95% Confidence Interval_RBC (million cells/uL)",
+                "Upper 95% Confidence Interval_RBC (million cells/uL)" ),
+    pattern = "{1},{2}") %>%
+      cols_merge(
+    columns = c("Lower 95% Confidence Interval_Mean Corpuscular Volume (fL)",
+                "Upper 95% Confidence Interval_Mean Corpuscular Volume (fL)" ),
+    pattern = "{1},{2}") %>%
+  tab_spanner(
+    label = "White Blood Cells (1000 cells/uL)",
+    columns = c("Beta Coefficient Interpretation_WBC (1000 cells/uL)",
+                "Lower 95% Confidence Interval_WBC (1000 cells/uL)",
+                "FDR_WBC (1000 cells/uL)")
+  )
+
+# %>% 
+# data_color(
+#     columns = c(4, 7),
+#     colors = scales::col_bin(
+#       palette = c("firebrick3", "blue", "transparent"),
+#       bins = c(0, 0.01, .05, 1),
+#       na.color = "transparent"
+#   )
+
+sub_values(pattern = "(,)",
+           replacement = "") %>%
+```
+
